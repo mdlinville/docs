@@ -1,135 +1,129 @@
 ---
-description: Use an Automation for model CI (automated model evaluation pipelines) and model deployment.
-title:  Model registry automations 
+title: Model registry automations
+description: Use an Automation for model CI (automated model evaluation pipelines)
+  and model deployment.
 displayed_sidebar: default
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+# 모델 레지스트리 변경으로 CI/CD 이벤트 트리거하기
 
+자동 모델 테스팅 및 배포와 같은 워크플로우 단계를 트리거하는 자동화를 생성합니다. 자동화를 생성하려면, 발생하길 원하는 [액션](#action-types)을 [이벤트 타입](#event-types) 기반으로 정의합니다.
 
-# Triggering CI/CD events with model registry changes
+예를 들어, 등록된 모델의 새 버전을 추가할 때 자동으로 모델을 GitHub에 배포하는 트리거를 생성할 수 있습니다.
 
-Create an automation to trigger workflow steps, such as automated model testing and deployment. To create an automation, define the [action](#action-types) you want to occur based on an [event type](#event-types).
-
-For example, you can create a trigger that automatically deploys a model to GitHub when you add a new version of a registered model.
-
-## Event types
-An *event* is a change that takes place in the W&B ecosystem. The Model Registry supports two event types: **Linking a new artifact to a registered model** and **Adding a new alias to a version of the registered model**.
+## 이벤트 타입
+*이벤트*는 W&B 에코시스템에서 발생하는 변경사항입니다. 모델 레지스트리는 두 가지 이벤트 타입을 지원합니다: **등록된 모델에 새 아티팩트 연결** 및 **등록된 모델 버전에 새 에일리어스 추가**.
 
 :::tip
-Use the **Linking a new artifact to a registered model** event type to test new model candidates. Use the **Adding a new alias to a version of the registered model** event type to specify an alias that represents a special step of your workflow, like `deploy`, and any time a new model version has that alias applied.
+새 모델 후보를 테스트하기 위해 **등록된 모델에 새 아티팩트 연결** 이벤트 타입을 사용하세요. **등록된 모델 버전에 새 에일리어스 추가** 이벤트 타입을 사용하여 워크플로우의 특별한 단계를 나타내는 에일리어스를 지정하세요. 예를 들어 `deploy`와 같이 새 모델 버전에 해당 에일리어스가 적용될 때마다 사용하십시오.
 :::
 
+## 액션 타입
+액션은 어떤 트리거의 결과로 발생하는 반응적인 변화(내부 또는 외부)입니다. 모델 레지스트리에서 생성할 수 있는 두 가지 유형의 액션이 있습니다: [웹훅](#create-a-webhook-automation) 및 [W&B Launch 작업](../launch/intro.md).
 
-## Action types
-An action is a responsive mutation (internal or external) that occurs as a result of some trigger. There are two types of actions you can create in the Model Registry: [webhooks](#create-a-webhook-automation) and [W&B Launch Jobs](../launch/intro.md).
-
-* Webhooks: Communicate with an external web server from W&B with HTTP requests.
-* W&B Launch job: [Jobs](../launch/create-launch-job.md) are reusable, configurable run templates that allow you to quickly launch new [runs](../runs/intro.md) locally on your desktop or external compute resources such as Kubernetes on EKS, Amazon SageMaker, and more. 
+* 웹훅: HTTP 요청을 통해 W&B에서 외부 웹 서버와 통신합니다.
+* W&B Launch 작업: [작업](../launch/create-launch-job.md)은 새로운 [run](../runs/intro.md)을 빠르게 시작할 수 있는 재사용 가능하고 구성 가능한 run 템플릿입니다. 예를 들어, 데스크톱의 로컬 또는 EKS의 Kubernetes, Amazon SageMaker 등과 같은 외부 컴퓨팅 리소스에서 실행할 수 있습니다.
 
 
-The following sections describe how to create an automation with webhooks and W&B Launch.
+다음 섹션에서는 웹훅 및 W&B Launch를 사용하여 자동화를 생성하는 방법을 설명합니다.
 
-## Create a webhook automation 
-Automate a webhook based on an action with the W&B App UI. To do this, you will first establish a webhook, then you will configure the webhook automation. 
+## 웹훅 자동화 생성
+W&B App UI를 사용하여 액션을 기반으로 웹훅 자동화를 자동화합니다. 이를 위해 먼저 웹훅을 설정한 다음, 웹훅 자동화를 구성해야 합니다.
 
-### Add a secret for authentication or authorization
-Secrets are team-level variables that let you obfuscate private strings such as credentials, API keys, passwords, tokens, and more. W&B recommends you use secrets to store any string that you want to protect the plain text content of.
+### 인증 또는 승인을 위한 비밀 추가
+비밀은 팀 수준 변수로, 자격증명, API 키, 비밀번호, 토큰 등과 같은 개인 문자열을 숨기는 데 사용할 수 있습니다. W&B는 평문 내용을 보호하고자 하는 모든 문자열을 저장하기 위해 비밀을 사용할 것을 권장합니다.
 
-To use a secret in your webhook, you must first add that secret to your team's secret manager.
+웹훅에서 비밀을 사용하려면, 먼저 해당 비밀을 팀의 비밀 관리자에 추가해야 합니다.
 
 :::info
-* Only W&B Admins can create, edit, or delete a secret.
-* Skip this section if the external server you send HTTP POST requests to does not use secrets.  
-* Secrets are also available if you use [W&B Server](../hosting/intro.md) in an Azure, GCP, or AWS deployment. Connect with your W&B account team to discuss how you can use secrets in W&B if you use a different deployment type.
+* W&B 관리자만 비밀을 생성, 편집 또는 삭제할 수 있습니다.
+* HTTP POST 요청을 보내는 외부 서버가 비밀을 사용하지 않는 경우 이 섹션을 건너뛰세요.
+* [W&B 서버](../hosting/intro.md)를 Azure, GCP 또는 AWS 배포에서 사용하는 경우에도 비밀을 사용할 수 있습니다. 다른 배포 유형을 사용하는 경우 W&B에서 비밀을 사용하는 방법에 대해 W&B 계정 팀과 연결하세요.
 :::
 
-There are two types of secrets W&B suggests that you create when you use a webhook automation:
+웹훅 자동화를 사용할 때 W&B가 생성할 것을 제안하는 비밀의 두 가지 유형이 있습니다:
 
-* **Access tokens**: Authorize senders to help secure webhook requests 
-* **Secret**: Ensure the authenticity and integrity of data transmitted from payloads
+* **액세스 토큰**: 발신자를 승인하여 웹훅 요청을 보호하는 데 도움이 됩니다.
+* **비밀**: 페이로드에서 전송된 데이터의 진정성과 무결성을 보장합니다.
 
-Follow the instructions below to create a webhook:
+웹훅을 생성하기 위한 아래 지침을 따르세요:
 
-1. Navigate to the W&B App UI.
-2. Click on **Team Settings**.
-3. Scroll down the page until you find the **Team secrets** section.
-4. Click on the **New secret** button.
-5. A modal will appear. Provide a name for your secret in the **Secret name** field.
-6. Add your secret into the **Secret** field. 
-7. (Optional) Repeat steps 5 and 6 to create another secret (such as an access token) if your webhook requires additional secret keys or tokens to authenticate your webhook.
+1. W&B App UI로 이동합니다.
+2. **팀 설정**을 클릭합니다.
+3. **팀 비밀** 섹션을 찾을 때까지 페이지를 아래로 스크롤합니다.
+4. **새 비밀** 버튼을 클릭합니다.
+5. 모달이 나타납니다. **비밀 이름** 필드에 비밀의 이름을 제공합니다.
+6. **비밀** 필드에 비밀을 추가합니다.
+7. (선택사항) 웹훅이 추가 비밀 키나 토큰을 인증하는 데 필요한 경우(예: 액세스 토큰과 같은) 다른 비밀을 생성하려면 5단계와 6단계를 반복하세요.
 
-Specify the secrets you want to use for your webhook automation when you configure the webhook. See the [Configure a webhook](#configure-a-webhook) section for more information. 
+웹훅을 구성할 때 사용하려는 비밀을 지정하세요. 자세한 내용은 [웹훅 구성](#configure-a-webhook) 섹션을 참조하세요.
 
 :::tip
-Once you create a secret, you can access that secret in your W&B workflows with `$`.
+비밀을 생성하면 `$`를 사용하여 W&B 워크플로우에서 해당 비밀에 액세스할 수 있습니다.
 :::
 
 :::caution
-Considerations if you use secrets in W&B Server:
+W&B 서버에서 비밀을 사용하는 경우 고려할 사항:
 
-You are responsible for configuring security measures that satisfy your security needs. 
+보안 요구사항을 충족하는 보안 조치를 구성하는 것은 당신의 책임입니다.
 
-W&B strongly recommends that you store secrets in a W&B instance of a cloud secrets manager provided by AWS, GCP, or Azure. Secret managers provided by AWS, GCP, and Azure are configured with advanced security capabilities.  
+W&B는 AWS, GCP 또는 Azure에서 제공하는 클라우드 비밀 관리자의 W&B 인스턴스에 비밀을 저장할 것을 강력히 권장합니다. AWS, GCP 및 Azure에서 제공하는 비밀 관리자는 고급 보안 기능으로 구성되어 있습니다.
 
-W&B does not recommend that you use a Kubernetes cluster as the backend of your secrets store. Consider a Kubernetes cluster only if you are not able to use a W&B instance of a cloud secrets manager (AWS, GCP, or Azure), and you understand how to prevent security vulnerabilities that can occur if you use a cluster.
+클러스터를 비밀 저장소의 백엔드로 사용하는 것은 권장하지 않습니다. AWS, GCP 또는 Azure에서 제공하는 클라우드 비밀 관리자(W&B 인스턴스)를 사용할 수 없고, 클러스터를 사용할 경우 발생할 수 있는 보안 취약점을 방지하는 방법을 이해하는 경우에만 Kubernetes 클러스터를 고려하세요.
 :::
 
-### Configure a webhook
-Before you can use a webhook, you will first need to configure that webhook in the W&B App UI.
+### 웹훅 구성
+웹훅을 사용하기 전에 먼저 W&B App UI에서 해당 웹훅을 구성해야 합니다.
 
 :::info
-* Only W&B Admins can configure a webhook for a W&B Team.
-* Ensure you already [created one or more secrets](#add-a-secret-for-authentication-or-authorization) if your webhook requires additional secret keys or tokens to authenticate your webhook.
+* W&B 관리자만 W&B 팀을 위해 웹훅을 구성할 수 있습니다.
+* 웹훅이 추가 비밀 키나 토큰을 인증하는 데 필요한 경우 이미 [하나 이상의 비밀을 생성했는지](#add-a-secret-for-authentication-or-authorization) 확인하세요.
 :::
 
-1. Navigate to the W&B App UI.
-2. Click on **Team Settings**.
-4. Scroll down the page until you find the **Webhooks** section.
-5. Click on the **New webhook** button.  
-6. Provide a name for your webhook in the **Name** field.
-7. Provide the endpoint URL for the webhook in the **URL** field.
-8. (Optional) From the **Secret** dropdown menu, select the secret you want to use to authenticate the webhook payload.
-9. (Optional) From the **Access token** dropdown menu, select the access token you want to use to authorize the sender.
-9. (Optional) From the **Access token** dropdown menu select additional secret keys or tokens required to authenticate a webhook  (such as an access token).
+1. W&B App UI로 이동합니다.
+2. **팀 설정**을 클릭합니다.
+4. **웹훅** 섹션을 찾을 때까지 페이지를 아래로 스크롤합니다.
+5. **새 웹훅** 버튼을 클릭합니다.
+6. **이름** 필드에 웹훅의 이름을 제공합니다.
+7. **URL** 필드에 웹훅의 엔드포인트 URL을 제공합니다.
+8. (선택사항) **비밀** 드롭다운 메뉴에서 웹훅 페이로드를 인증하는 데 사용하려는 비밀을 선택합니다.
+9. (선택사항) **액세스 토큰** 드롭다운 메뉴에서 발신자를 승인하는 데 사용하려는 액세스 토큰을 선택합니다.
+9. (선택사항) **액세스 토큰** 드롭다운 메뉴에서 웹훅을 인증하는 데 필요한 추가 비밀 키나 토큰을 선택합니다(예: 액세스 토큰과 같은).
 
 :::note
-See the [Troubleshoot your webhook](#troubleshoot-your-webhook) section to view where the secret and access token are specified in
-the POST request.
+POST 요청에서 비밀과 액세스 토큰이 지정된 위치를 보려면 [웹훅 문제 해결](#troubleshoot-your-webhook) 섹션을 참조하세요.
 :::
 
+### 웹훅 추가
+웹훅을 구성하고 (선택적으로) 비밀이 있는 경우 [https://wandb.ai/registry/model](https://wandb.ai/registry/model)에서 모델 레지스트리 앱으로 이동합니다.
 
-### Add a webhook 
-Once you have a webhook configured and (optionally) a secret, navigate to the Model Registry App at [https://wandb.ai/registry/model](https://wandb.ai/registry/model).
-
-1. From the **Event type** dropdown, select an [event type](#event-types).
+1. **이벤트 타입** 드롭다운에서 [이벤트 타입](#event-types)을 선택합니다.
 ![](/images/models/webhook_select_event.png)
-2. (Optional) If you selected **A new version is added to a registered model** event, provide the name of a registered model from the **Registered model** dropdown. 
+2. (선택사항) **등록된 모델에 새 버전이 추가됨** 이벤트를 선택한 경우 **등록된 모델** 드롭다운에서 등록된 모델의 이름을 제공합니다.
 ![](/images/models/webhook_new_version_reg_model.png)
-3. Select **Webhooks** from the **Action type** dropdown. 
-4. Click on the **Next step** button.
-5. Select a webhook from the **Webhook** dropdown.
+3. **액션 유형** 드롭다운에서 **웹훅**을 선택합니다.
+4. **다음 단계** 버튼을 클릭합니다.
+5. **웹훅** 드롭다운에서 웹훅을 선택합니다.
 ![](/images/models/webhooks_select_from_dropdown.png)
-6. (Optional) Provide a payload in the JSON expression editor. See the [Example payload](#example-payloads) section for common use case examples.
-7. Click on **Next step**.
-8. Provide a name for your webhook automation in the **Automation name** field. 
+6. (선택사항) JSON 표현식 편집기에 페이로드를 제공합니다. 일반적인 유스 케이스 예제는 [예시 페이로드](#example-payloads) 섹션을 참조하세요.
+7. **다음 단계**를 클릭합니다.
+8. **자동화 이름** 필드에 웹훅 자동화의 이름을 제공합니다.
 ![](/images/models/webhook_name_automation.png)
-9. (Optional) Provide a description for your webhook. 
-10. Click on the **Create automation** button.
+9. (선택사항) 웹훅에 대한 설명을 제공합니다.
+10. **자동화 생성** 버튼을 클릭합니다.
 
+### 예시 페이로드
 
-
-### Example payloads
-
-The following tabs demonstrate example payloads based on common use cases. Within the examples they reference the following keys to refer to condition objects in the payload parameters:
-* `${event_type}` Refers to the type of event that triggered the action.
-* `${event_author}` Refers to the user that triggered the action.
-* `${artifact_version}` Refers to the specific artifact version that triggered the action. Passed as an artifact instance.
-* `${artifact_version_string}` Refers to the specific artifact version that triggered the action. Passed as a string.
-* `${artifact_collection_name}` Refers to the name of the artifact collection that the artifact version is linked to.
-* `${project_name}` Refers to the name of the project owning the mutation that triggered the action.
-* `${entity_name}` Refers to the name of the entity owning the mutation that triggered the action.
+다음 탭은 일반적인 유스 케이스를 기반으로 한 예시 페이로드를 보여줍니다. 예제 내에서는 페이로드 파라미터의 조건 오브젝트를 참조하기 위해 다음 키를 언급합니다:
+* `${event_type}` 액션을 트리거한 이벤트 유형을 나타냅니다.
+* `${event_author}` 액션을 트리거한 사용자를 나타냅니다.
+* `${artifact_version}` 액션을 트리거한 특정 아티팩트 버전을 나타냅니다. 아티팩트 인스턴스로 전달됩니다.
+* `${artifact_version_string}` 액션을 트리거한 특정 아티팩트 버전을 나타냅니다. 문자열로 전달됩니다.
+* `${artifact_collection_name}` 아티팩트 버전이 연결된 아티팩트 컬렉션의 이름을 나타냅니다.
+* `${project_name}` 액션을 트리거한 변이를 소유한 프로젝트의 이름을 나타냅니다.
+* `${entity_name}` 액션을 트리거한 변이를 소유한 엔티티의 이름을 나타냅니다.
 
 
 <Tabs
@@ -189,6 +183,11 @@ The `event_type` key in the webhook payload must match the `types` field in the 
   Use template strings to dynamically pass context from W&B to GitHub Actions and other tools. If those tools can call Python scripts, they can consume the registered model artifacts through the [W&B API](../artifacts/download-and-use-an-artifact.md).
 
   For more information about repository dispatch, see the [official documentation on the GitHub Marketplace](https://github.com/marketplace/actions/repository-dispatch).  
+
+  See [Webhook Automations for Model Evaluation](https://www.youtube.com/watch?v=7j-Mtbo-E74&ab_channel=Weights%26Biases) and [Webhook Automations for Model Deployment](https://www.youtube.com/watch?v=g5UiAFjM2nA&ab_channel=Weights%26Biases) for step by step YouTube videos on how to create automations for model evaluation and deployment, respectively. 
+
+  See this W&B [report](https://wandb.ai/wandb/wandb-model-cicd/reports/Model-CI-CD-with-W-B--Vmlldzo0OTcwNDQw) to learn how to use a Github Actions webhook automation for Model CI. Check out this [GitHub repository](https://github.com/hamelsmu/wandb-modal-webhook) to learn how to create model CI with a Modal Labs webhook. 
+
 
   </TabItem>
   <TabItem value="microsoft">
@@ -264,11 +263,36 @@ The `event_type` key in the webhook payload must match the `types` field in the 
   </TabItem>
 </Tabs>
 
-:::info
-See this W&B [report](https://wandb.ai/wandb/wandb-model-cicd/reports/Model-CI-CD-with-W-B--Vmlldzo0OTcwNDQw) to learn how to use a Github Actions webhook automation for Model CI. Check out this [GitHub repository](https://github.com/hamelsmu/wandb-modal-webhook) to learn how to create model CI with a Modal Labs webhook. 
-:::
-
 ### Troubleshoot your webhook
+
+Interactively troubleshoot your webhook with the W&B App UI or programmatically with a Bash script. You can troubleshoot a webhook when you create a new webhook or edit an existing webhook.
+
+<Tabs
+  defaultValue="app"
+  values={[
+    {label: 'W&B App UI', value: 'app'},
+    {label: 'Bash script', value: 'bash'},
+  ]}>
+  <TabItem value="app">
+
+Interactively test a webhook with the W&B App UI. 
+
+1. Navigate to your W&B Team Settings page.
+2. Scroll to the **Webhooks** section.
+3. Click on the horizontal three docs (meatball icon) next to the name of your webhook.
+4. Select **Test**.
+5. From the UI panel that appears, paste your POST request to the field that appears. 
+![](/images/models/webhook_ui.png)
+6. Click on **Test webhook**.
+
+Within the W&B App UI, W&B posts the response made by your endpoint.
+
+![](/images/models/webhook_ui_testing.gif)
+
+See [Testing Webhooks in Weights & Biases](https://www.youtube.com/watch?v=bl44fDpMGJw&ab_channel=Weights%26Biases) YouTube video to view a real-world example.
+
+  </TabItem>
+  <TabItem value="bash">
 
 The following bash script generates a POST request similar to the POST request W&B sends to your webhook automation when it is triggered.
 
@@ -303,6 +327,11 @@ curl -X POST \
   -H "X-Wandb-Signature: $SIGNATURE" \
   -d "$PAYLOAD" API_ENDPOINT
 ```
+
+  </TabItem>
+</Tabs>
+
+
 
 ## Create a launch automation
 Automatically start a W&B Job. 
@@ -349,5 +378,3 @@ Delete an automation associated with a model. Actions in progress are not affect
 3. Scroll to the bottom of the page to the **Automations** section.
 4. Hover your mouse next to the name of the automation and click on the kebob (three vertical dots) menu. 
 5. Select **Delete**.
-
-

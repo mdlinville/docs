@@ -1,7 +1,6 @@
 ---
 description: Get started using Weights & Biases with interactive tutorials.
 slug: /tutorials
-displayed_sidebar: default
 ---
 
 # W&B 튜토리얼

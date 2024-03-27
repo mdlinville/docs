@@ -38,7 +38,7 @@ const Home: React.FC = () => {
         <div className={styles.homePage}>
           <div className={styles.homeHeader}>
             <Translate>Weights & Biases</Translate> <br/>
-            <Translate>Documentation</Translate>
+            <Translate>선적 서류 비치</Translate>
           </div>
           <BigSearchBar />
           <div className={styles.homeDescription}>

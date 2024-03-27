@@ -1,9 +1,9 @@
 
 # 이미지
 
-<p><button style={{display: 'flex', alignItems: 'center', backgroundColor: 'white', border: '1px solid #ddd', padding: '10px', borderRadius: '6px', cursor: 'pointer', boxShadow: '0 2px 3px rgba(0,0,0,0.1)', transition: 'all 0.3s'}}><a href='https://www.github.com/wandb/wandb/tree/fa4423647026d710e3780287b4bac2ee9494e92b/wandb/sdk/data_types/image.py#L64-L687' style={{fontSize: '1.2em', display: 'flex', alignItems: 'center'}}><img src='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png' height='32px' width='32px' style={{marginRight: '10px'}}/>GitHub에서 소스 보기</a></button></p>
+<p><button style={{display: 'flex', alignItems: 'center', backgroundColor: 'white', border: '1px solid #ddd', padding: '10px', borderRadius: '6px', cursor: 'pointer', boxShadow: '0 2px 3px rgba(0,0,0,0.1)', transition: 'all 0.3s'}}><a href='https://www.github.com/wandb/wandb/tree/v0.16.4/wandb/sdk/data_types/image.py#L64-L687' style={{fontSize: '1.2em', display: 'flex', alignItems: 'center'}}><img src='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png' height='32px' width='32px' style={{marginRight: '10px'}}/>GitHub에서 소스 보기</a></button></p>
 
-W&B에 로그를 기록하기 위한 이미지 형식.
+W&B에 로그하기 위한 이미지 형식화.
 
 ```python
 Image(
@@ -20,18 +20,15 @@ Image(
 
 | 인수 |  |
 | :--- | :--- |
-|  `data_or_path` |  (numpy 배열, 문자열, io) 이미지 데이터의 numpy 배열이나 PIL 이미지를 받습니다. 클래스는 데이터 포맷을 추론하여 변환합니다. |
-|  `mode` |  (문자열) 이미지의 PIL 모드입니다. 가장 일반적인 모드는 "L", "RGB", "RGBA"입니다. 전체 설명은 https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes 에서 확인하세요. |
-|  `caption` |  (문자열) 이미지의 표시 라벨입니다. |
+|  `data_or_path` |  (numpy 배열, 문자열, io) 이미지 데이터의 numpy 배열 또는 PIL 이미지를 받습니다. 클래스는 데이터 형식을 추론하고 변환합니다. |
+|  `mode` |  (문자열) 이미지의 PIL 모드입니다. 가장 일반적인 것은 "L", "RGB", "RGBA"입니다. 전체 설명은 https://pillow.readthedocs.io/en/stable/handbook/concepts.html#modes 에서 확인하세요. |
+|  `caption` |  (문자열) 이미지 표시용 레이블입니다. |
 
 참고: `torch.Tensor`를 `wandb.Image`로 로깅할 때, 이미지는 정규화됩니다. 이미지를 정규화하고 싶지 않다면, 텐서를 PIL 이미지로 변환해주세요.
 
 #### 예시:
 
 ### numpy 배열에서 wandb.Image 생성하기
-
-
-
 
 ```python
 import numpy as np
@@ -48,9 +45,6 @@ with wandb.init() as run:
 
 ### PILImage에서 wandb.Image 생성하기
 
-
-
-
 ```python
 import numpy as np
 from PIL import Image as PILImage
@@ -66,10 +60,7 @@ with wandb.init() as run:
     run.log({"examples": examples})
 ```
 
-### .png 대신 .jpg 로그하기 (기본값)
-
-
-
+### .png(default) 대신 .jpg 로그하기
 
 ```python
 import numpy as np
@@ -87,11 +78,11 @@ with wandb.init() as run:
 | 속성 |  |
 | :--- | :--- |
 
-## 메서드
+## 메소드
 
 ### `all_boxes`
 
-[소스 보기](https://www.github.com/wandb/wandb/tree/fa4423647026d710e3780287b4bac2ee9494e92b/wandb/sdk/data_types/image.py#L608-L629)
+[소스 보기](https://www.github.com/wandb/wandb/tree/v0.16.4/wandb/sdk/data_types/image.py#L608-L629)
 
 ```python
 @classmethod
@@ -105,7 +96,7 @@ all_boxes(
 
 ### `all_captions`
 
-[소스 보기](https://www.github.com/wandb/wandb/tree/fa4423647026d710e3780287b4bac2ee9494e92b/wandb/sdk/data_types/image.py#L631-L635)
+[소스 보기](https://www.github.com/wandb/wandb/tree/v0.16.4/wandb/sdk/data_types/image.py#L631-L635)
 
 ```python
 @classmethod
@@ -116,7 +107,7 @@ all_captions(
 
 ### `all_masks`
 
-[소스 보기](https://www.github.com/wandb/wandb/tree/fa4423647026d710e3780287b4bac2ee9494e92b/wandb/sdk/data_types/image.py#L585-L606)
+[소스 보기](https://www.github.com/wandb/wandb/tree/v0.16.4/wandb/sdk/data_types/image.py#L585-L606)
 
 ```python
 @classmethod
@@ -130,7 +121,7 @@ all_masks(
 
 ### `guess_mode`
 
-[소스 보기](https://www.github.com/wandb/wandb/tree/fa4423647026d710e3780287b4bac2ee9494e92b/wandb/sdk/data_types/image.py#L472-L484)
+[소스 보기](https://www.github.com/wandb/wandb/tree/v0.16.4/wandb/sdk/data_types/image.py#L472-L484)
 
 ```python
 guess_mode(
@@ -138,11 +129,11 @@ guess_mode(
 ) -> str
 ```
 
-np.array가 나타내는 이미지 유형을 추측합니다.
+np.array가 나타내는 이미지의 유형을 추정합니다.
 
 ### `to_uint8`
 
-[소스 보기](https://www.github.com/wandb/wandb/tree/fa4423647026d710e3780287b4bac2ee9494e92b/wandb/sdk/data_types/image.py#L486-L509)
+[소스 보기](https://www.github.com/wandb/wandb/tree/v0.16.4/wandb/sdk/data_types/image.py#L486-L509)
 
 ```python
 @classmethod
@@ -153,7 +144,7 @@ to_uint8(
 
 이미지 데이터를 uint8로 변환합니다.
 
-[0,1] 범위의 부동 소수점 이미지와 [0,255] 범위의 정수 이미지를 uint8로 변환하며, 필요한 경우 클리핑합니다.
+[0,1] 범위의 부동 소수점 이미지와 [0,255] 범위의 정수 이미지를 필요에 따라 클리핑하여 uint8로 변환합니다.
 
 | 클래스 변수 |  |
 | :--- | :--- |

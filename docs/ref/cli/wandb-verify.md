@@ -3,7 +3,7 @@
 
 **사용법**
 
-`wandb verify [OPTIONS]`
+`wandb verify [옵션]`
 
 **요약**
 

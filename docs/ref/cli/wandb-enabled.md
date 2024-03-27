@@ -3,7 +3,7 @@
 
 **사용법**
 
-`wandb enabled [OPTIONS]`
+`wandb enabled [옵션]`
 
 **요약**
 
@@ -13,4 +13,4 @@ W&B를 활성화합니다.
 
 | **옵션** | **설명** |
 | :--- | :--- |
-| --service | W&B 서비스 활성화  [기본값: True] |
+| --service | W&B 서비스를 활성화합니다 [기본값: True] |

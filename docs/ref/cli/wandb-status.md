@@ -3,14 +3,14 @@
 
 **사용법**
 
-`wandb status [OPTIONS]`
+`wandb status [옵션]`
 
 **요약**
 
-구성 설정 보기
+설정을 보여줍니다
 
 **옵션**
 
 | **옵션** | **설명** |
 | :--- | :--- |
-| --settings / --no-settings | 현재 설정 보기 |
+| --settings / --no-settings | 현재 설정을 보여줍니다 |

@@ -3,13 +3,13 @@
 
 [![](https://www.tensorflow.org/images/GitHub-Mark-32px.png)GitHub에서 소스 보기](https://www.github.com/wandb/client/tree/c4726707ed83ebb270a2cf84c4fd17b8684ff699/wandb/integration/langchain/wandb_tracer.py#L99-L281)
 
-Weights and Biases에 로그하는 콜백 핸들러.
+Weights and Biases에 로그를 남기는 콜백 핸들러.
 
 ```python
 WandbTracer() -> Any
 ```
 
-이 핸들러는 모델 아키텍처와 실행 트레이스를 Weights and Biases에 로그합니다. 이를 통해 모든 LangChain 활동이 W&B에 로그됩니다.
+이 핸들러는 모델 아키텍처와 run 트레이스를 Weights and Biases에 로그로 남깁니다. 이를 통해 모든 LangChain 활동이 W&B에 로그로 남게 됩니다.
 
 | 속성 | |
 | :--- | :--- |
@@ -18,7 +18,7 @@ WandbTracer() -> Any
 | `ignore_chain` | 체인 콜백을 무시할지 여부. |
 | `ignore_llm` | LLM 콜백을 무시할지 여부. |
 
-## 메서드
+## 메소드
 
 ### `finish`
 
@@ -57,11 +57,11 @@ WandbTracer를 설정하고 기본 핸들러로 만듭니다.
 
 #### 파라미터:
 
-* **`run_args`**: (dict, optional) `wandb.init()`에 전달할 인수입니다. 제공되지 않으면, `wandb.init()`은 인수 없이 호출됩니다. 자세한 내용은 `wandb.init`를 참조하세요.
-* **`include_stdout`**: (bool, optional) True인 경우, `StdOutCallbackHandler`가 핸들러 목록에 추가됩니다. LangChain을 사용할 때 유용한 정보를 stdout에 출력하기 때문에 일반적인 관행입니다.
-* **`additional_handlers`**: (list, optional) LangChain 핸들러 목록에 추가할 추가 핸들러 목록입니다.
+* **`run_args`**: (dict, optional) `wandb.init()`에 전달할 인수. 제공되지 않으면, `wandb.init()`은 아무 인수 없이 호출됩니다. 자세한 내용은 `wandb.init`을 참조해주세요.
+* **`include_stdout`**: (bool, optional) True인 경우, `StdOutCallbackHandler`가 핸들러 목록에 추가됩니다. 이는 LangChain을 사용할 때 유용한 정보를 stdout에 출력하기 때문에 일반적인 관행입니다.
+* **`additional_handlers`**: (list, optional) LangChain 핸들러 목록에 추가할 추가 핸들러의 목록입니다.
 
-모든 LangChain 활동을 모니터링하기 위해 W&B를 사용하려면, 단순히 노트북이나 스크립트 상단에서 이 함수를 호출하세요:
+노트북이나 스크립트의 상단에서 이 함수를 호출하기만 하면 모든 LangChain 활동을 W&B로 모니터링할 수 있습니다:
 ```
 from wandb.integration.langchain import WandbTracer
 WandbTracer.init()
@@ -70,7 +70,7 @@ WandbTracer.init()
 WandbTracer.finish()
 ```.
 
-이것은 노트북에서와 같이 동일한 인수로 반복적으로 호출해도 안전하며, run_args가 다를 경우에만 새로운 실행을 생성합니다.
+이것은 동일한 인수로 반복해서 호출되더라도 새로운 run을 만들지 않기 때문에 안전합니다(노트북에서와 같이).
 
 ### `init_run`
 
@@ -86,9 +86,9 @@ wandb가 초기화되지 않았다면 초기화합니다.
 
 #### 파라미터:
 
-* **`run_args`**: (dict, optional) `wandb.init()`에 전달할 인수입니다. 제공되지 않으면, `wandb.init()`은 인수 없이 호출됩니다. 자세한 내용은 `wandb.init`를 참조하세요.
+* **`run_args`**: (dict, optional) `wandb.init()`에 전달할 인수. 제공되지 않으면, `wandb.init()`은 아무 인수 없이 호출됩니다. 자세한 내용은 `wandb.init`을 참조해주세요.
 
-run_args가 다를 경우에만 새로운 실행을 시작하고자 합니다. 이는 노트북 설정에서 생성되는 W&B 실행 수를 줄이는 것이 더 이상적입니다. 참고: 이 메서드를 직접 호출하는 것은 일반적이지 않습니다. 대신, `WandbTracer.init()` 메서드를 사용해야 합니다. 이 메서드는 핸들러 목록에 트레이서를 수동으로 초기화하고 추가하고 싶을 때 노출됩니다.
+run 인수가 다를 경우에만 새로운 run을 시작하고자 합니다. 이는 노트북 설정에서 생성되는 W&B run의 수를 줄이는 것이 더 이상적입니다. 주의: 이 메소드를 직접 호출하는 것은 일반적이지 않습니다. 대신, `WandbTracer.init()` 메소드를 사용해야 합니다. 이 메소드는 핸들러 목록에 트레이서를 수동으로 초기화하고 추가하고 싶을 때 노출됩니다.
 
 ### `load_default_session`
 
@@ -98,7 +98,7 @@ run_args가 다를 경우에만 새로운 실행을 시작하고자 합니다. �
 load_default_session() -> "TracerSession"
 ```
 
-기본 추적 세션을 로드하고 트레이서의 세션으로 설정합니다.
+기본 트레이싱 세션을 로드하고 Tracer의 세션으로 설정합니다.
 
 ### `load_session`
 
@@ -121,7 +121,7 @@ new_session(
 ) -> TracerSession
 ```
 
-스레드 안전하지 않습니다. 여러 스레드에서 이 메서드를 호출하지 마십시오.
+스레드 안전하지 않음, 여러 스레드에서 이 메소드를 호출하지 마십시오.
 
 ### `on_agent_action`
 
@@ -154,7 +154,7 @@ on_chain_end(
 ) -> None
 ```
 
-체인 실행에 대한 추적을 종료합니다.
+체인 run의 트레이스를 종료합니다.
 
 ### `on_chain_error`
 
@@ -165,7 +165,7 @@ on_chain_error(
 ) -> None
 ```
 
-체인 실행에 대한 오류를 처리합니다.
+체인 run에 대한 오류를 처리합니다.
 
 ### `on_chain_start`
 
@@ -177,7 +177,7 @@ on_chain_start(
 ) -> None
 ```
 
-체인 실행에 대한 추적을 시작합니다.
+체인 run에 대한 트레이스를 시작합니다.
 
 ### `on_llm_end`
 
@@ -188,7 +188,7 @@ on_llm_end(
 ) -> None
 ```
 
-LLM 실행에 대한 추적을 종료합니다.
+LLM run의 트레이스를 종료합니다.
 
 ### `on_llm_error`
 
@@ -199,7 +199,7 @@ on_llm_error(
 ) -> None
 ```
 
-LLM 실행에 대한 오류를 처리합니다.
+LLM run에 대한 오류를 처리합니다.
 
 ### `on_llm_new_token`
 
@@ -210,7 +210,7 @@ on_llm_new_token(
 ) -> None
 ```
 
-LLM 실행에 대한 새 토큰을 처리합니다.
+LLM run에 대한 새 토큰을 처리합니다.
 
 ### `on_llm_start`
 
@@ -222,7 +222,7 @@ on_llm_start(
 ) -> None
 ```
 
-LLM 실행에 대한 추적을 시작합니다.
+LLM run에 대한 트레이스를 시작합니다.
 
 ### `on_text`
 
@@ -244,7 +244,7 @@ on_tool_end(
 ) -> None
 ```
 
-도구 실행에 대한 추적을 종료합니다.
+툴 run의 트레이스를 종료합니다.
 
 ### `on_tool_error`
 
@@ -255,7 +255,7 @@ on_tool_error(
 ) -> None
 ```
 
-도구 실행에 대한 오류를 처리합니다.
+툴 run에 대한 오류를 처리합니다.
 
 ### `on_tool_start`
 
@@ -267,4 +267,4 @@ on_tool_start(
 ) -> None
 ```
 
-도구 실행에 대한 추적을 시작합니다.
+툴 run에 대한 트레이스를 시작합니다.

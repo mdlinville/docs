@@ -24,7 +24,7 @@
 #### 반환 값
 [엔티티](https://docs.wandb.ai/ref/weave/entity)의 이름
 
-## 목록 연산
+## 리스트 연산
 <h3 id="entity-link"><code>entity-link</code></h3>
 
 [엔티티](https://docs.wandb.ai/ref/weave/entity)의 링크를 반환합니다.

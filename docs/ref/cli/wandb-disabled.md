@@ -3,11 +3,11 @@
 
 **사용법**
 
-`wandb disabled [옵션]`
+`wandb disabled [OPTIONS]`
 
 **요약**
 
-W&B 비활성화.
+W&B를 비활성화합니다.
 
 **옵션**
 

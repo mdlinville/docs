@@ -1,17 +1,17 @@
 
 # Keras 모델
 
-[**여기에서 Colab 노트북으로 시도해보세요 →**](https://colab.research.google.com/github/wandb/examples/blob/master/colabs/keras/Use_WandbModelCheckpoint_in_your_Keras_workflow.ipynb)
+[**Colab 노트북에서 시도해보기 →**](https://colab.research.google.com/github/wandb/examples/blob/master/colabs/keras/Use_WandbModelCheckpoint_in_your_Keras_workflow.ipynb)
 
-머신 러닝 실험 추적, 데이터세트 버전 관리, 프로젝트 협업을 위해 Weights & Biases를 사용하세요.
+Weights & Biases를 사용하여 기계학습 실험 추적, 데이터셋 버전 관리 및 프로젝트 협업을 하세요.
 
 <img src="http://wandb.me/mini-diagram" width="650" alt="Weights & Biases" />
 
-이 Colab 노트북은 `WandbModelCheckpoint` 콜백을 소개합니다. 이 콜백을 사용하여 모델 체크포인트를 Weights and Biases [아티팩트](https://docs.wandb.ai/guides/data-and-model-versioning)에 로그하세요.
+이 Colab 노트북은 `WandbModelCheckpoint` 콜백을 소개합니다. 이 콜백을 사용하여 모델 체크포인트를 Weights & Biases의 [Artifacts](https://docs.wandb.ai/guides/data-and-model-versioning)에 로그하세요.
 
-# 🌴 설정 및 설치
+# 🌴 설치 및 설정
 
-먼저, Weights and Biases의 최신 버전을 설치합니다. 그런 다음 이 Colab 인스턴스를 W&B 사용이 가능하도록 인증합니다.
+먼저 Weights & Biases의 최신 버전을 설치합니다. 그런 다음 이 Colab 인스턴스를 W&B를 사용하도록 인증합니다.
 
 
 ```python
@@ -26,13 +26,13 @@ from tensorflow.keras import layers
 from tensorflow.keras import models
 import tensorflow_datasets as tfds
 
-# Weights and Biases 관련 임포트
+# Weights & Biases 관련 임포트
 import wandb
 from wandb.keras import WandbMetricsLogger
 from wandb.keras import WandbModelCheckpoint
 ```
 
-W&B를 처음 사용하거나 로그인되어 있지 않은 경우, `wandb.login()`을 실행한 후 나타나는 링크는 가입/로그인 페이지로 이동합니다. [무료 계정](https://wandb.ai/signup) 가입은 몇 번의 클릭만으로 간단합니다.
+W&B를 처음 사용하거나 로그인하지 않은 경우, `wandb.login()`을 실행한 후 나타나는 링크가 가입/로그인 페이지로 이동합니다. 몇 번의 클릭으로 [무료 계정](https://wandb.ai/signup)에 가입하는 것은 매우 간단합니다.
 
 
 ```python
@@ -41,7 +41,7 @@ wandb.login()
 
 # 🌳 하이퍼파라미터
 
-재현 가능한 머신 러닝을 위한 적절한 구성 시스템 사용이 권장되는 최선의 방법입니다. W&B를 사용하여 모든 실험의 하이퍼파라미터를 추적할 수 있습니다. 이 Colab에서는 간단한 Python `dict`를 구성 시스템으로 사용할 것입니다.
+재현 가능한 기계학습을 위해 적절한 설정 시스템 사용을 권장하는 모범 사례입니다. W&B를 사용하여 모든 실험의 하이퍼파라미터를 추적할 수 있습니다. 이 Colab에서는 간단한 Python `dict`을 설정 시스템으로 사용할 것입니다.
 
 
 ```python
@@ -57,9 +57,9 @@ configs = dict(
 )
 ```
 
-# 🍁 데이터세트
+# 🍁 데이터셋
 
-이 Colab에서는 TensorFlow 데이터세트 카탈로그의 [CIFAR100](https://www.tensorflow.org/datasets/catalog/cifar100) 데이터세트를 사용할 것입니다. TensorFlow/Keras를 사용하여 간단한 이미지 분류 파이프라인을 구축하는 것이 목표입니다.
+이 Colab에서는 TensorFlow Dataset 카탈로그의 [CIFAR100](https://www.tensorflow.org/datasets/catalog/cifar100) 데이터셋을 사용할 것입니다. TensorFlow/Keras를 사용하여 간단한 이미지 분류 파이프라인을 구축하는 것이 목표입니다.
 
 
 ```python
@@ -72,11 +72,11 @@ AUTOTUNE = tf.data.AUTOTUNE
 
 
 def parse_data(example):
-    # 이미지 가져오기
+    # 이미지 얻기
     image = example["image"]
     # image = tf.image.convert_image_dtype(image, dtype=tf.float32)
 
-    # 라벨 가져오기
+    # 라벨 얻기
     label = example["label"]
     label = tf.one_hot(label, depth=configs["num_classes"])
 
@@ -145,7 +145,7 @@ model.compile(
 
 
 ```python
-# W&B 실행 초기화
+# W&B run 초기화
 run = wandb.init(
     project = "intro-keras",
     config = configs
@@ -158,10 +158,10 @@ model.fit(
     validation_data = validloader,
     callbacks = [
         WandbMetricsLogger(log_freq=10),
-        WandbModelCheckpoint(filepath="models/") # 여기에서 WandbModelCheckpoint의 사용을 주목하세요
+        WandbModelCheckpoint(filepath="models/") # 여기서 WandbModelCheckpoint 사용에 주목하세요
     ]
 )
 
-# W&B 실행 종료
+# W&B run 종료
 run.finish()
 ```

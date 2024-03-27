@@ -420,7 +420,6 @@ const sidebars = {
         'guides/integrations/langchain',
         'guides/integrations/lightgbm',
         'guides/integrations/other/metaflow',
-        'guides/integrations/mmdetection',
         'guides/integrations/other/mmf',
         'guides/integrations/other/composer',
         'guides/integrations/other/openai-api',

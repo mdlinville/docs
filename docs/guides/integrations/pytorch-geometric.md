@@ -6,16 +6,16 @@ import TabItem from '@theme/TabItem';
 
 # PyTorch Geometric
 
-[PyTorch Geometric](https://github.com/pyg-team/pytorch_geometric) 또는 PyG는 기하학적 딥 러닝을 위한 가장 인기 있는 라이브러리 중 하나이며, W&B는 그래프 시각화 및 실험 추적에 매우 잘 작동합니다.
+[PyTorch Geometric](https://github.com/pyg-team/pytorch_geometric) 또는 PyG는 기하학적 딥러닝을 위한 가장 인기 있는 라이브러리 중 하나이며, W&B는 그래프 시각화 및 실험 추적에 매우 잘 작동합니다.
 
 ## 시작하기
 
-pytorch geometric을 설치한 후 wandb 라이브러리를 설치하고 로그인하세요.
+pytorch geometric을 설치한 후에, wandb 라이브러리를 설치하고 로그인하세요.
 
 <Tabs
   defaultValue="script"
   values={[
-    {label: '명령 줄', value: 'script'},
+    {label: '커맨드라인', value: 'script'},
     {label: '노트북', value: 'notebook'},
   ]}>
   <TabItem value="script">
@@ -40,11 +40,11 @@ wandb.login()
 
 ## 그래프 시각화하기
 
-입력 그래프에 대한 세부 정보를 저장할 수 있습니다. 여기에는 엣지 수, 노드 수 등이 포함됩니다. W&B는 plotly 차트 및 HTML 패널 로깅을 지원하므로 그래프에 대해 생성한 모든 시각화를 W&B에 로깅할 수 있습니다.
+입력 그래프에 대한 정보를 저장할 수 있으며, 여기에는 에지의 수, 노드의 수 등이 포함됩니다. W&B는 plotly 차트 및 HTML 패널 로깅을 지원하므로 그래프에 대한 시각화를 생성한 다음 W&B에 로그할 수 있습니다.
 
 ### PyVis 사용하기
 
-다음 스니펫은 PyVis와 HTML을 사용하여 이를 수행하는 방법을 보여줍니다.
+다음 코드 조각은 PyVis와 HTML을 사용하여 이 작업을 수행하는 방법을 보여줍니다.
 
 ```python
 from pyvis.network import Network
@@ -53,7 +53,7 @@ import wandb
 wandb.init(project='graph_vis')
 net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
 
-# PyG 그래프에서 PyVis 네트워크로 엣지 추가
+# PyG 그래프에서 PyVis 네트워크로 에지 추가하기
 for e in tqdm(g.edge_index.T):
     src = e[0].item()
     dst = e[1].item()
@@ -63,19 +63,19 @@ for e in tqdm(g.edge_index.T):
     
     net.add_edge(src, dst, value=0.1)
 
-# PyVis 시각화를 HTML 파일로 저장
+# PyVis 시각화를 HTML 파일로 저장하기
 net.show("graph.html")
 wandb.log({"eda/graph": wandb.Html("graph.html")})
 wandb.finish()
 ```
 
-| ![이 이미지는 입력 그래프를 대화형 HTML 시각화로 보여줍니다.](@site/static/images/integrations/pyg_graph_wandb.png) | 
+| ![이 이미지는 인터랙티브한 HTML 시각화로 입력 그래프를 보여줍니다.](@site/static/images/integrations/pyg_graph_wandb.png) | 
 |:--:| 
-| **이 이미지는 입력 그래프를 대화형 HTML 시각화로 보여줍니다.** |
+| **이 이미지는 인터랙티브한 HTML 시각화로 입력 그래프를 보여줍니다.** |
 
 ### Plotly 사용하기
 
-Plotly를 사용하여 그래프 시각화를 생성하려면, 먼저 PyG 그래프를 networkx 객체로 변환해야 합니다. 이후 노드와 엣지에 대한 Plotly 산점도를 생성해야 합니다. 아래 스니펫은 이 작업을 수행하는 데 사용할 수 있습니다.
+plotly를 사용하여 그래프 시각화를 생성하려면 먼저 PyG 그래프를 networkx 객체로 변환해야 합니다. 이후 노드와 에지 모두에 대해 Plotly 산점도를 생성해야 합니다. 아래 코드 조각을 사용해 이 작업을 수행할 수 있습니다.
 
 ```python
 def create_vis(graph):
@@ -125,13 +125,13 @@ wandb.log({'graph': wandb.Plotly(create_vis(graph))})
 wandb.finish()
 ```
 
-| ![이 시각화는 위에 표시된 스니펫의 함수를 사용하여 생성되었으며 W&B 테이블 내부에 기록되었습니다.](@site/static/images/integrations/pyg_graph_plotly.png) | 
+| ![이 시각화는 위의 코드 조각에서 보여진 함수를 사용하여 생성되었으며 W&B 테이블 내부에 로깅되었습니다.](@site/static/images/integrations/pyg_graph_plotly.png) | 
 |:--:| 
-| **이 시각화는 위에 표시된 스니펫의 함수를 사용하여 생성되었으며 W&B 테이블 내부에 기록되었습니다.** |
+| **이 시각화는 위의 코드 조각에서 보여진 함수를 사용하여 생성되었으며 W&B 테이블 내부에 로깅되었습니다.** |
 
-## 메트릭 로깅
+## 메트릭 로깅하기
 
-손실 함수, 정확도 등과 같은 모든 실험과 메트릭을 추적하기 위해 W&B를 사용할 수 있습니다. 학습 루프에 다음 줄을 추가하기만 하면 됩니다!
+W&B를 사용하여 모든 실험과 손실 함수, 정확도 등과 같은 메트릭을 추적할 수 있습니다. 트레이닝 루프에 다음 줄을 추가하기만 하면 됩니다!
 
 ```python
 wandb.log({
@@ -142,12 +142,12 @@ wandb.log({
 })
 ```
 
-| ![다양한 K 값에 대해 에포크별로 hits@K 메트릭이 어떻게 변하는지 보여주는 W&B의 플롯입니다.](@site/static/images/integrations/pyg_metrics.png) | 
+| ![W&B에서 보여지는 플롯으로, 다양한 K 값에 대해 에포크별로 hits@K 메트릭이 어떻게 변하는지를 보여줍니다.](@site/static/images/integrations/pyg_metrics.png) | 
 |:--:| 
-| **다양한 K 값에 대해 에포크별로 hits@K 메트릭이 어떻게 변하는지 보여주는 W&B의 플롯입니다.** |
+| **W&B에서 보여지는 플롯으로, 다양한 K 값에 대해 에포크별로 hits@K 메트릭이 어떻게 변하는지를 보여줍니다.** |
 
 ## 추가 자료
 
-- [PyTorch Geometric을 사용한 아마존 제품 추천](https://wandb.ai/manan-goel/gnn-recommender/reports/Recommending-Amazon-Products-using-Graph-Neural-Networks-in-PyTorch-Geometric--VmlldzozMTA3MzYw#what-does-the-data-look-like?)
+- [PyTorch Geometric을 사용하여 아마존 제품 추천하기](https://wandb.ai/manan-goel/gnn-recommender/reports/Recommending-Amazon-Products-using-Graph-Neural-Networks-in-PyTorch-Geometric--VmlldzozMTA3MzYw#what-does-the-data-look-like?)
 - [PyTorch Geometric을 사용한 포인트 클라우드 분류](https://wandb.ai/geekyrakshit/pyg-point-cloud/reports/Point-Cloud-Classification-using-PyTorch-Geometric--VmlldzozMTExMTE3)
-- [PyTorch Geometric을 사용한 포인트 클라우드 세분화](https://wandb.ai/wandb/point-cloud-segmentation/reports/Point-Cloud-Segmentation-using-Dynamic-Graph-CNN--VmlldzozMTk5MDcy)
+- [PyTorch Geometric을 사용한 포인트 클라우드 분할](https://wandb.ai/wandb/point-cloud-segmentation/reports/Point-Cloud-Segmentation-using-Dynamic-Graph-CNN--VmlldzozMTk5MDcy)

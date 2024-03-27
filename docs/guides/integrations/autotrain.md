@@ -4,15 +4,15 @@ displayed_sidebar: default
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# 허깅 페이스 오토트레인
+# Hugging Face Autotrain
 
-[🤗 오토트레인](https://huggingface.co/docs/autotrain/index)은 자연어 처리(NLP) 작업, 컴퓨터 비전(CV) 작업, 음성 작업 및 표 형식 작업을 위한 최신 모델을 학습하기 위한 노코드 도구입니다.
+[🤗 AutoTrain](https://huggingface.co/docs/autotrain/index)은 자연어 처리(NLP) 작업, 컴퓨터 비전(CV) 작업, 음성 작업 및 탭 작업을 위한 최신 모델을 트레이닝하는 노코드 툴입니다.
 
-[Weights & Biases](http://wandb.com/)는 🤗 오토트레인에 직접 통합되어, 실험 추적 및 구성 관리를 제공합니다. 실험을 위한 CLI 명령에서 단일 인수를 사용하는 것만큼 쉽습니다!
+[Weights & Biases](http://wandb.com/)는 🤗 AutoTrain에 직접 통합되어 실험 추적 및 설정 관리를 제공합니다. 실험을 위한 CLI 코맨드에서 단일 인수를 사용하는 것만큼 쉽습니다!
 
-| ![실험의 메트릭이 어떻게 기록되는지에 대한 예시](@site/static/images/integrations/hf-autotrain-1.png) | 
+| ![실험의 메트릭이 어떻게 기록되는지의 예시](@site/static/images/integrations/hf-autotrain-1.png) | 
 |:--:| 
-| **실험의 메트릭이 어떻게 기록되는지에 대한 예시입니다.** |
+| **실험의 메트릭이 어떻게 기록되는지의 예시입니다.** |
 
 ## 시작하기
 
@@ -21,7 +21,7 @@ import TabItem from '@theme/TabItem';
 <Tabs
   defaultValue="script"
   values={[
-    {label: '명령 줄', value: 'script'},
+    {label: '커맨드라인', value: 'script'},
     {label: '노트북', value: 'notebook'},
   ]}>
   <TabItem value="script">
@@ -40,22 +40,22 @@ pip install --upgrade autotrain-advanced wandb
   </TabItem>
 </Tabs>
 
-## 시작하기: LLM 파인 튜닝
+## 시작하기: LLM 파인튜닝하기
 
-이 변경 사항을 보여주기 위해, 수학 데이터세트에서 LLM에 대해 파인 튜닝을 하고 [GSM8k 벤치마크](https://github.com/openai/grade-school-math)에서 `pass@1`에서 SoTA 결과를 달성하려고 합니다.
+이러한 변경 사항을 보여주기 위해 수학 데이터셋에 LLM을 파인튜닝하고 [GSM8k Benchmarks](https://github.com/openai/grade-school-math)에서 `pass@1`에서 SoTA 결과를 달성하려고 시도할 것입니다.
 
-### 데이터세트 준비하기
+### 데이터셋 준비하기
 
-🤗 오토트레인은 학습을 수행할 "text" 열이 포함된 특정 형식의 CSV 사용자 정의 데이터세트를 기대합니다. 최상의 결과를 얻으려면 "text" 열에는 `### Human: 질문?### Assistant: 답변.` 형식의 데이터가 있어야 합니다. 오토트레인 고급이 기대하는 데이터세트 유형의 훌륭한 예시는 [`timdettmers/openassistant-guanaco`](https://huggingface.co/datasets/timdettmers/openassistant-guanaco)입니다. 그러나 [MetaMathQA 데이터세트](https://huggingface.co/datasets/meta-math/MetaMathQA)를 살펴보면, "query", "response" 및 "type"의 3개 열이 있습니다. 이 데이터세트를 전처리하여 "type" 열을 제거하고 "query" 및 "response" 열의 내용을 `### Human: 질문?### Assistant: 응답.` 형식으로 하나의 "text" 열 아래에 결합할 것입니다. 결과 데이터세트는 [`rishiraj/guanaco-style-metamath`](https://huggingface.co/datasets/rishiraj/guanaco-style-metamath)이며 학습에 사용될 것입니다.
+🤗 AutoTrain은 트레이닝이 제대로 수행될 수 있도록 특정 형식의 CSV 사용자 데이터셋을 요구합니다. 교육 파일은 트레이닝이 수행될 "text" 열을 포함해야 합니다. 최상의 결과를 위해 "text" 열은 `### Human: Question?### Assistant: Answer.` 형식의 데이터를 포함해야 합니다. AutoTrain Advanced가 기대하는 데이터셋의 훌륭한 예는 [`timdettmers/openassistant-guanaco`](https://huggingface.co/datasets/timdettmers/openassistant-guanaco)입니다. 그러나 [MetaMathQA 데이터셋](https://huggingface.co/datasets/meta-math/MetaMathQA)을 살펴보면 "query", "response" 및 "type"의 3개 열이 있습니다. 우리는 "type" 열을 제거하고 "query" 및 "response" 열의 내용을 `### Human: Query?### Assistant: Response.` 형식으로 하나의 "text" 열에 결합하여 이 데이터셋을 전처리할 것입니다. 결과 데이터셋은 [`rishiraj/guanaco-style-metamath`](https://huggingface.co/datasets/rishiraj/guanaco-style-metamath)이며 트레이닝에 사용될 것입니다.
 
-### 오토트레인 고급을 사용한 학습
+### Autotrain Advanced를 사용한 트레이닝
 
-오토트레인 고급 CLI를 사용하여 학습을 시작할 수 있습니다. 로깅 기능을 활용하려면 `--log` 인수를 단순히 사용하면 됩니다. `--log wandb`를 지정하면 결과가 [W&B 실행](https://docs.wandb.ai/guides/runs)에 자연스럽게 기록됩니다.
+Autotrain Advanced CLI를 사용하여 트레이닝을 시작할 수 있습니다. 로깅 기능을 활용하려면 `--log` 인수를 단순히 사용하면 됩니다. `--log wandb`를 지정하면 결과가 [W&B run](https://docs.wandb.ai/guides/runs)에 원활하게 기록됩니다.
 
 <Tabs
   defaultValue="script"
   values={[
-    {label: '명령 줄', value: 'script'},
+    {label: '커맨드라인', value: 'script'},
     {label: '노트북', value: 'notebook'},
   ]}>
   <TabItem value="script">
@@ -106,7 +106,7 @@ lora_alpha = 32
 lora_dropout = 0.05
 logging_steps = 10
 
-# 학습 실행
+# 트레이닝 실행
 !autotrain llm \
     --train \
     --model "HuggingFaceH4/zephyr-7b-alpha" \
@@ -137,11 +137,11 @@ logging_steps = 10
   </TabItem>
 </Tabs>
 
-| ![실험의 모든 구성이 어떻게 저장되는지에 대한 예시.](@site/static/images/integrations/hf-autotrain-2.gif) | 
+| ![실험의 모든 설정이 어떻게 저장되는지의 예시.](@site/static/images/integrations/hf-autotrain-2.gif) | 
 |:--:| 
-| **실험의 모든 구성이 어떻게 저장되는지에 대한 예시입니다.** |
+| **실험의 모든 설정이 어떻게 저장되는지의 예시입니다.** |
 
 ## 추가 자료
 
-* [AutoTrain Advanced 이제 실험 추적을 지원합니다](https://huggingface.co/blog/rishiraj/log-autotrain) by [Rishiraj Acharya](https://huggingface.co/rishiraj).
-* [🤗 오토트레인 문서](https://huggingface.co/docs/autotrain/index)
+* [AutoTrain Advanced는 이제 실험 추적을 지원합니다](https://huggingface.co/blog/rishiraj/log-autotrain) by [Rishiraj Acharya](https://huggingface.co/rishiraj).
+* [🤗 Autotrain 문서](https://huggingface.co/docs/autotrain/index)

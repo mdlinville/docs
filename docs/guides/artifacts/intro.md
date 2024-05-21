@@ -41,6 +41,8 @@ run = wandb.init(project = "artifacts-example", job_type = "add-dataset")
 run.log_artifact(data = "./dataset.h5", name = "my_data", type = "dataset" ) # Logs the artifact version "my_data" as a dataset with data from dataset.h5
 ```
 
+The `type` of the artifact affects how it appears in the W&B platform. Leaving this parameter blank results in an artifact being`uncategorized`.
+
 :::tip
 See the [track external files](./track-external-files.md) page for information on how to add references to files or directories stored in external object storage, like an Amazon S3 bucket. 
 :::

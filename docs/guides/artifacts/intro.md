@@ -45,7 +45,7 @@ The `type` of the artifact affects how it appears in the W&B platform. Leaving t
 
 [](../../../static/images/artifacts/artifacts_dropdown.png)
 
-Note how the label of the dropdown menu matches the `tyoe` parameter.
+Note how the label of the dropdown menu matches the `type` parameter.
 
 :::tip
 See the [track external files](./track-external-files.md) page for information on how to add references to files or directories stored in external object storage, like an Amazon S3 bucket. 

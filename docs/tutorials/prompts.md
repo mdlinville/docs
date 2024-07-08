@@ -1,23 +1,22 @@
-# Iterate on LLMs
 
-[**Try in a Colab Notebook here →**](https://colab.research.google.com/github/wandb/examples/blob/master/colabs/prompts/W&B_Prompts_Quickstart.ipynb)
+# LLMs のイテレーション
 
-**Weights & Biases Prompts** is a suite of LLMOps tools built for the development of LLM-powered applications. 
+[**Colab ノートブックで試す →**](https://colab.research.google.com/github/wandb/examples/blob/master/colabs/prompts/WandB_Prompts_Quickstart.ipynb)
 
-Use W&B Prompts to visualize and inspect the execution flow of your LLMs, analyze the inputs and outputs of your LLMs, view the intermediate results and securely store and manage your prompts and LLM chain configurations.
+**Weights & Biases Prompts** は、LLM を活用したアプリケーション開発のための LLMOps ツールセットです。
 
-## Installation
+W&B Prompts を使うと、LLM の実行フローを可視化・調査したり、LLM の入力と出力を分析したり、中間結果を確認したり、プロンプトや LLM チェーンの設定を安全に保存・管理することができます。
 
+## インストール
 
 ```python
 !pip install "wandb==0.15.2" -qqq
 !pip install "langchain==v0.0.158" openai -qqq
 ```
 
-## Setup
+## セットアップ
 
-This demo requires that you have an [OpenAI key](https://platform.openai.com)
-
+このデモでは [OpenAI key](https://platform.openai.com) が必要です。
 
 ```python
 import os
@@ -31,24 +30,21 @@ print("OpenAI API key configured")
 
 # W&B Prompts
 
-W&B currently supports a tool called __Trace__. Trace consists of three main components:
+W&B は現在、__Trace__ というツールをサポートしています。Trace は以下の3つの主要なコンポーネントで構成されています：
 
-**Trace table**: Overview of the inputs and outputs of a chain.
+**Trace table**: チェーンの入力と出力の概要。
 
-**Trace timeline**: Displays the execution flow of the chain and is color-coded according to component types.
+**Trace timeline**: チェーンの実行フローを表示し、コンポーネントの種類に応じて色分けされます。
 
-**Model architecture**: View details about the structure of the chain and the parameters used to initialize each component of the chain.
+**Model architecture**: チェーンの構造と各コンポーネントの初期化に使用されたパラメータの詳細。
 
-After running this section, you will see a new panel automatically created in your workspace, showing each execution, the trace, and the model architecture
-
+このセクションを実行すると、新しいパネルが自動的にワークスペースに作成され、各実行、トレース、およびモデル・アーキテクチャが表示されます。
 
 ![prompts_1](/images/tutorials/prompts_quickstart/prompts.png)
 
 ![prompts_2](/images/tutorials/prompts_quickstart/prompts2.png)
 
-
-Import `WandbTracer`and optionally define a dictionary with arguments for `wandb.init()` that will later be passed to `WandbTracer`. This includes a project name, team name, entity, and more. For more information about wandb.init, see the API Reference Guide.
-
+`WandbTracer` をインポートし、オプションで `wandb.init()` の引数を含む辞書を定義できます。これには、プロジェクト名やチーム名、エンティティなどが含まれます。wandb.init の詳細については、API リファレンス・ガイドを参照してください。
 
 ```python
 from wandb.integration.langchain import WandbTracer
@@ -56,8 +52,7 @@ from wandb.integration.langchain import WandbTracer
 wandb_config = {"project": "wandb_prompts_quickstart"}
 ```
 
-### Maths with LangChain
-
+### LangChain で数値計算
 
 ```python
 from langchain.agents import load_tools
@@ -66,7 +61,6 @@ from langchain.agents import AgentType
 from langchain.llms import OpenAI
 ```
 
-
 ```python
 llm = OpenAI(temperature=0)
 tools = load_tools(["llm-math"], llm=llm)
@@ -74,8 +68,7 @@ agent = initialize_agent(
   tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION)
 ```
 
-Pass `WandbTracer` when you call your LangChain chain or agent to log your trace to W&B
-
+LangChain チェーンやエージェントを呼び出すときに `WandbTracer` を渡して、Trace を W&B にログとして記録します。
 
 ```python
 questions = [
@@ -93,54 +86,50 @@ for question in questions:
     pass
 ```
 
-When you're finished your session, it is best practice to call `WandbTracer.finish()` to ensure your wandb run closes cleanly.
-
+セッションを終了する際には、`WandbTracer.finish()` を呼び出して、wandb run が正常に終了するようにするのがベストプラクティスです。
 
 ```python
 WandbTracer.finish()
 ```
 
-# Non-Lang Chain Implementation
+# LangChain を使わない場合の実装
 
-What if you don't want to use Langchain - in particular you want to write an integration or instrucment your teams code? That is completely ok! Let's learn about `TraceTree` and `Span`!
+もし LangChain を使いたくない、特に独自のインテグレーションを書くかチームのコードに計器を設置したい場合は、それも問題ありません！ `TraceTree` と `Span` について学びましょう！
 
 ![prompts_3](/images/tutorials/prompts_quickstart/prompts3.png)
 
-**Note:** W&B Runs support logging as many traces you needed to a single run, i.e. you can make multiple calls of `run.log` without the need to create a new run each time
-
+**注意:** W&B Runs は必要に応じて複数のトレースを単一の run にログすることをサポートしています。つまり、毎回新しい run を作成せずに複数回 `run.log` を呼び出すことができます。
 
 ```python
 from wandb.sdk.data_types import trace_tree
 import wandb
 ```
 
-A Span represents a unit of work, Spans can have type `AGENT`, `TOOL`, `LLM` or `CHAIN`
-
+Span は作業単位を表し、`AGENT`, `TOOL`, `LLM` または `CHAIN` のタイプを持つことができます。
 
 ```python
 parent_span = trace_tree.Span(
-  name="Example Span", 
-  span_kind = trace_tree.SpanKind.AGEN
+  name="Example Span",
+  span_kind = trace_tree.SpanKind.AGENT
 )
 ```
 
-Spans can (and should!) be nested:
-
+Span は入れ子にすることができます（そしてすべきです！）。
 
 ```python
-# Create a span for a call to a Tool
+# ツールへの呼び出しのための Span を作成
 tool_span = trace_tree.Span(
   name="Tool 1", 
   span_kind = trace_tree.SpanKind.TOOL
 )
 
-# Create a span for a call to a LLM Chain
+# LLM チェーンへの呼び出しのための Span を作成
 chain_span = trace_tree.Span(
   name="LLM CHAIN 1", 
   span_kind = trace_tree.SpanKind.CHAIN
 )
 
-# Create a span for a call to a LLM that is called by the LLM Chain
+# LLM チェーンによって呼び出される LLM のための Span を作成
 llm_span = trace_tree.Span(
   name="LLM 1", 
   span_kind = trace_tree.SpanKind.LLM
@@ -148,8 +137,7 @@ llm_span = trace_tree.Span(
 chain_span.add_child_span(llm_span)
 ```
 
-Span Inputs and Outputs can be added like so:
-
+Span の入力と出力を追加することができます：
 
 ```python
 tool_span.add_named_result(
@@ -168,12 +156,11 @@ llm_span.add_named_result(
 parent_span.add_child_span(tool_span)
 parent_span.add_child_span(chain_span)
 
-parent_span.add_named_result({"user": "calculate: 2023 - 1998"}, 
+parent_span.add_named_result({"user": "calculate: 2023 - 1998"},
                              {"response": "25 years old"})
 ```
 
-You can then log the parent_span to W&B like as below. 
-
+その後、以下のように parent_span を W&B にログすることができます。
 
 ```python
 run = wandb.init(name="manual_span_demo", project="wandb_prompts_demo")
@@ -181,4 +168,4 @@ run.log({"trace": trace_tree.WBTraceTree(parent_span)})
 run.finish()
 ```
 
-Clicking on the W&B Run link generated will take you to a workspace where you can inspect the Trace created.
+生成された W&B Run のリンクをクリックすると、作成された Trace を確認することができるワークスペースに移動します。

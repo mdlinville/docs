@@ -1,28 +1,57 @@
 ---
-description: Deploying W&B in production
+title: Self managed
+description: プロダクションに W&B をデプロイする
 displayed_sidebar: default
 ---
 
-# 自己管理型ホスティング
+# Self managed
 
 :::info
-あなたのインフラストラクチャー上でW&Bサーバーをプライベートにホストする前に、[W&B管理型ホスティングオプション](./wb-managed.md)を利用することを検討することをお勧めします。W&Bクラウドはシンプルで安全であり、ほとんどまたはまったく設定が必要ありません。
+W&B は [W&B Multi-tenant Cloud](./saas_cloud.md) または [W&B Dedicated Cloud](./dedicated_cloud.md) デプロイメントタイプなど、完全に管理されたデプロイメントオプションを推奨しています。W&B の完全管理サービスは、設定がほとんど不要で、シンプルかつ安全に利用できます。
 :::
-## オンプレミスプライベートクラウド
 
-オンプレミスプライベートクラウドは、W&Bサーバーが顧客のプライベートクラウドインフラストラクチャー上でスケーラブルな展開で実行される完全に自己ホストされたソリューションです。W&Bは、顧客に公式のW&B terraformスクリプトを使用してAWS/GCP/Azureに展開することをお勧めしています。顧客は、すべてのW&Bサービスが利用可能な選択した地域でこれを展開することができます。環境は、TerraformとKubernetesで構成されたツールセットを使用して、当社またはお客様の会社によってプロビジョニングできます。インスタンスのアップグレードとメンテナンスは、顧客のIT/DevOps/MLOpsチームが対応する必要があります。
+[自分の AWS、GCP、または Azure クラウドアカウント](#deploy-wb-server-within-self-managed-cloud-accounts) または [オンプレミスのインフラストラクチャー](#deploy-wb-server-in-on-premises-infrastructure) に W&B Server をデプロイします。
 
-インフラストラクチャーを構成する最も簡単な方法は、W&Bの公式terraフォームスクリプトを使用することです。
+IT/DevOps/MLOps チームは、デプロイメントのプロビジョニング、アップグレードの管理、および自己管理型の W&B Server インスタンスの継続的なメンテナンスを担当します。
 
-- [Amazon Web Services（AWS）](https://github.com/wandb/terraform-aws-wandb)
-- [Google Cloud Platform（GCP）](https://github.com/wandb/terraform-google-wandb)
-- [Microsoft Azure](https://github.com/wandb/terraform-azurerm-wandb)
-## オンプレミス ベアメタル
+## 自己管理型クラウドアカウントに W&B Server をデプロイ
 
-これは、完全に自己ホストされたソリューションで、W&Bサーバーが顧客のオンプレミスのベアメタルインフラストラクチャーでスケーラブルな展開で実行されています。オンプレミスのベアメタルインストールでW&Bサーバーを設定および構成するために必要なインフラストラクチャーの要素がいくつかありますが、これに限定されません
+W&B では、公式の W&B Terraform スクリプトを使用して、AWS、GCP、または Azure クラウドアカウントに W&B Server をデプロイすることを推奨しています。
 
-- スケーラブルなMySQL 8データベース
-- S3互換のオブジェクトストレージ
-- メッセージキュー
-- Redisキャッシュ（オプション）
-W&Bでは、互換性のあるデータベースエンジンやオブジェクトストアの推奨事項を提供し、インストールプロセスを支援する経験豊富なチームがいます。データベースの管理や分散オブジェクトストレージシステムの作成と維持など、お客様のIT/DevOps/MLOpsチームに追加の負担がかかります。可能な場合、W&BはW&B管理のクラウドソリューションを使用して、より良いユーザー体験を提供することをお勧めします。
+[AWS](../self-managed/aws-tf.md)、[GCP](../self-managed/gcp-tf.md)、または [Azure](../self-managed/azure-tf.md) に W&B Server を設定する方法の詳細については、各クラウドプロバイダーのドキュメントを参照してください。
+
+## オンプレミスのインフラストラクチャーに W&B Server をデプロイ
+
+オンプレミスのインフラストラクチャーに W&B Server を設定するには、いくつかのインフラストラクチャーコンポーネントを構成する必要があります。そのコンポーネントには以下が含まれますが、これに限定されません：
+
+- （強く推奨）Kubernetes クラスター
+- MySQL 8 データベースクラスター
+- Amazon S3 互換オブジェクトストレージ
+- Redis キャッシュクラスター
+
+オンプレミスのインフラストラクチャーに W&B Server をインストールする方法の詳細については、[Install on on-prem infrastructure](../self-managed/bare-metal.md) を参照してください。W&B は、さまざまなコンポーネントに関する推奨事項を提供し、インストールプロセス全体をサポートします。
+
+## カスタムクラウドプラットフォームに W&B Server をデプロイ
+
+W&B Server を AWS、GCP、または Azure 以外のクラウドプラットフォームにデプロイすることができます。その要件は [オンプレミスのインフラストラクチャー](#deploy-wb-server-in-on-prem-infrastructure) にデプロイする場合と同様です。
+
+## W&B Server ライセンスの取得
+
+W&B サーバーの設定を完了するには W&B トライアルライセンスが必要です。無料トライアルライセンスを生成するには、[Deploy Manager](https://deploy.wandb.ai/deploy) を開いてください。
+
+:::note
+W&B アカウントをお持ちでない場合は、無料ライセンスを生成するためにアカウントを作成する必要があります。
+:::
+
+URL は **Get a License for W&B Local** フォームにリダイレクトされます。以下の情報を提供してください：
+
+1. **Choose Platform** ステップでデプロイメントタイプを選択します。
+2. **Basic Information** ステップでライセンスの所有者を選択するか、新しい組織を追加します。
+3. **Get a License** ステップでインスタンスの名前を **Name of Instance** フィールドに入力し、オプションで **Description** フィールドに説明を入力します。
+4. **Generate License Key** ボタンを選択します。
+
+デプロイメントの概要とインスタンスに関連付けられたライセンスを含むページが表示されます。
+
+:::info
+重要なセキュリティおよびその他のエンタープライズ向け機能のサポートを含む W&B Server のエンタープライズライセンスが必要な場合は、[このフォームを送信](https://wandb.ai/site/for-enterprise/self-hosted-trial) するか、W&B チームにご連絡ください。
+:::

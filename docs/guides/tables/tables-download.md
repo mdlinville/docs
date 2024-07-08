@@ -1,16 +1,17 @@
 ---
-description: How to export data from tables.
+description: テーブルからデータをエクスポートする方法
 displayed_sidebar: default
 ---
 
-# Export Table Data
-Like all W&B Artifacts, Tables can be converted into pandas dataframes for easy data exporting. 
 
-## Convert `table` to `artifact`
-First, you'll need to convert the table to an artifact. The easiest way to do this using `artifact.get(table, "table_name")`:
+# テーブルデータのエクスポート
+すべての W&B Artifacts と同様に、Tables は簡単にデータをエクスポートできるように pandas データフレームに変換できます。
+
+## `table` を `artifact` に変換
+まず、テーブルをアーティファクトに変換します。これを行う最も簡単な方法は `artifact.get(table, "table_name")` を使用することです。
 
 ```python
-# Create and log a new table.
+# 新しいテーブルを作成してログに記録する。
 with wandb.init() as r:
     artifact = wandb.Artifact("my_dataset", type="dataset")
     table = wandb.Table(
@@ -19,29 +20,29 @@ with wandb.init() as r:
     artifact.add(table, "my_table")
     wandb.log_artifact(artifact)
 
-# Retrieve the created table using the artifact you created.
+# 作成したアーティファクトを使用してテーブルを取得する。
 with wandb.init() as r:
     artifact = r.use_artifact("my_dataset:latest")
     table = artifact.get("my_table")
 ```
 
-## Convert `artifact` to Dataframe
-Then, convert the table into a dataframe:
+## `artifact` をデータフレームに変換
+次に、テーブルをデータフレームに変換します。
 
 ```python
-# Following from the last code example:
+# 前のコード例に続いて
 df = table.get_dataframe()
 ```
 
-## Export Data
-Now you can export using any method dataframe supports:
+## データのエクスポート
+これで、データフレームがサポートする任意の方法でデータをエクスポートできます。
 
 ```python
-# Converting the table data to .csv
-df.to_csv('example.csv', encoding='utf-8')
+# テーブルデータを .csv に変換する
+df.to_csv("example.csv", encoding="utf-8")
 ```
 
-# Next Steps
-- Check out the [reference documentation](../artifacts/construct-an-artifact.md) on `artifacts`.
-- Go through our [Tables Walktrough](../tables/tables-walkthrough.md) guide.
-- Check out the [Dataframe](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html) reference docs.
+# 次のステップ
+- `artifacts` に関する [リファレンスドキュメント](../artifacts/construct-an-artifact.md) をチェックしてください。
+- [Tables Walktrough](../tables/tables-walkthrough.md) ガイドをご覧ください。
+- [Dataframe](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html) リファレンスドキュメントをチェックしてください。

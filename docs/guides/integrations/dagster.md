@@ -1,5 +1,5 @@
 ---
-description: Guide on how to integrate W&B with Dagster.
+description: W&B を Dagster と統合するためのガイド。
 displayed_sidebar: default
 ---
 import Tabs from '@theme/Tabs';
@@ -7,35 +7,34 @@ import TabItem from '@theme/TabItem';
 
 # Dagster
 
-DagsterとWeights & Biases（W&B）を使ってMLOpsの開発フローを組織化し、MLアセットを維持します。DagsterでのW&Bとの統合により、次のことが簡単に行えます:
+DagsterとW&B (Weights & Biases) を使用して、MLOpsパイプラインを管理し、ML資産を維持します。W&Bとのインテグレーションにより、Dagster内で簡単に以下のことができます:
 
-* [W&Bアーティファクト](../artifacts/intro.md)の使用と作成。
-* [W&Bモデルレジストリ](../model_registry/intro.md)内のRegistered Modelsの使用と作成。
-* [W&B Launch](../launch/intro.md)を使用して専用の計算リソースでトレーニングジョブを実行。
-* opsとアセットで[wandb](../../ref/python/README.md)クライアントを使用。
+* [W&B Artifacts](../artifacts/intro.md) の使用および作成。
+* [W&B Model Registry](../model_registry/intro.md) でのRegistered Modelsの使用および作成。
+* [W&B Launch](../launch/intro.md) を使用して専用のコンピュータでトレーニングジョブを実行。
+* opsと資産で [wandb](../../ref/python/README.md) クライアントを使用。
 
-W&BのDagster統合では、W&B固有のDagsterリソースとIOマネージャーが提供されます:
+W&BとDagsterのインテグレーションは、W&B-specificなDagsterリソースとIO Managerを提供します:
 
-* `wandb_resource`: W&B APIと認証、通信を行うためのDagsterリソース。
-* `wandb_artifacts_io_manager`: W&Bアーティファクトを使用するためのDagster IOマネージャー。
+* `wandb_resource`: W&B APIに認証し、通信するために使用されるDagsterリソース。
+* `wandb_artifacts_io_manager`: W&B Artifactsを消費するためのDagster IO Manager。
 
-次のガイドでは、DagsterでW&Bを使用するための前提条件の満たし方、opsとアセットでW&Bアーティファクトを作成・使用する方法、W&B Launchの使い方、および推奨されるベストプラクティスについて説明しています。
+次のガイドでは、DagsterでW&Bを使用するための前提条件を満たす方法、opsと資産でW&B Artifactsを作成および使用する方法、W&B Launchを使用する方法、推奨されるベストプラクティスについて説明します。
 
-## はじめに
-Weights and Biases内でDagsterを使用するには、次のリソースが必要です:
-1. **W&B APIキー**。
-2. **W&Bエンティティ（ユーザーまたはチーム）**: エンティティは、W&BのRunsやアーティファクトを送信するユーザー名またはチーム名です。ログの送信前にW&BアプリUIでアカウントまたはチームのエンティティを作成してください。エンティティが指定されていない場合、Runはデフォルトのエンティティ（通常はあなたのユーザー名）に送信されます。**プロジェクトのデフォルト**の設定でデフォルトのエンティティを変更できます。
-3. **W&Bプロジェクト**: [W&B Runs](../runs/intro.md)が格納されるプロジェクトの名前。
+## 始める前に
+Weights & BiasesでDagsterを使用するには、次のリソースが必要です:
+1. **W&B API Key**.
+2. **W&B entity (user or team)**: エンティティは、W&B RunsおよびArtifactsを送信するユーザー名またはチーム名です。runをログに記録する前に、W&BのアプリケーションUIでアカウントまたはチームエンティティを必ず作成してください。エンティティを指定しなかった場合、runは通常、ユーザー名であるデフォルトのエンティティに送信されます。 **Project Defaults** の設定でデフォルトエンティティを変更できます。
+3. **W&B project**: [W&B Runs](../runs/intro.md) が保存されるプロジェクトの名前。
 
-W&Bアプリでユーザーまたはチームのプロファイルページを確認して、W&Bエンティティを見つけることができます。既存のW&Bプロジェクトを使用するか、新しいプロジェクトを作成することができます。新しいプロジェクトは、W&Bアプリのホームページまたはユーザー/チームのプロファイルページで作成できます。プロジェクトが存在しない場合、最初に使用すると自動的に作成されます。次の手順では、APIキーを取得する方法を示しています。
+W&Bエンティティは、W&B Appのユーザーまたはチームのプロフィールページで確認できます。既存のW&Bプロジェクトを使用することも、新しいプロジェクトを作成することもできます。新しいプロジェクトはW&B Appのホームページまたはユーザー/チームのプロフィールページで作成できます。プロジェクトが存在しない場合、初回使用時に自動的に作成されます。以下の手順では、APIキーの取得方法を示しています。
+
 ### APIキーの取得方法
-1. [W&Bにログイン](https://wandb.ai/login)します。注：W&B Serverを使用している場合は、インスタンスのホスト名を管理者に尋ねてください。
-2. [認証ページ](https://wandb.ai/authorize)に移動してAPIキーを収集するか、ユーザー/チームの設定で見つけます。プロダクション環境では、そのキーを所有する[サービスアカウント](https://docs.wandb.ai/guides/technical-faq/general#what-is-a-service-account-and-why-is-it-useful)を使用することをお勧めします。
-3. そのAPIキーの環境変数を設定します。`WANDB_API_KEY=YOUR_KEY`をエクスポートします。
+1. [W&Bにログイン](https://wandb.ai/login) します。注: W&B Serverを使用している場合、管理者にインスタンスホスト名を問い合わせてください。
+2. [認可ページ](https://wandb.ai/authorize) またはユーザー/チームの設定でAPIキーを取得します。プロダクション環境では、 [サービスアカウント](https://docs.wandb.ai/guides/technical-faq/general#what-is-a-service-account-and-why-is-it-useful) を所有しているキーを使用することをお勧めします。
+3. そのAPIキーを環境変数に設定します。 `export WANDB_API_KEY=YOUR_KEY`。
 
-
-以下の例では、Dagsterのコード内でAPIキーを指定する場所を示しています。`wandb_config`ネストされた辞書の中でエンティティとプロジェクト名を指定してください。異なるW&Bプロジェクトを使用したい場合は、異なる`wandb_config`値を異なるops/assetsに渡すことができます。渡すことができるキーの詳細については、以下の構成セクションを参照してください。
-
+以下の例では、Dagsterコード内でAPIキーを指定する方法を示します。 `wandb_config` ネストされた辞書内にエンティティとプロジェクト名を指定してください。異なるW&B Projectを使用する場合、異なる `wandb_config`値を異なるops/assetsに渡すことができます。渡すことができる可能なキーについては、以下の設定セクションを参照してください。
 
 <Tabs
   defaultValue="job"
@@ -45,16 +44,16 @@ W&Bアプリでユーザーまたはチームのプロファイルページを�
   ]}>
   <TabItem value="job">
 
-例：`@job`の構成
+Example: `@job`の設定
 ```python
-# これをconfig.yamlに追加します
-# あるいは、DagitのLaunchpadまたはJobDefinition.execute_in_processで設定を行うこともできます
-# 参照：https://docs.dagster.io/concepts/configuration/config-schema#specifying-runtime-configuration
+# config.yamlにこれを追加
+# あるいはDagit's LaunchpadまたはJobDefinition.execute_in_processで設定できます
+# リファレンス: https://docs.dagster.io/concepts/configuration/config-schema#specifying-runtime-configuration
 resources:
  wandb_config:
    config:
-     entity: my_entity # これをあなたのW&Bエンティティに置き換えてください
-     project: my_project # これをあなたのW&Bプロジェクトに置き換えてください
+     entity: my_entity # これをW&Bエンティティに置き換える
+     project: my_project # これをW&Bプロジェクト名に置き換える
 
 
 @job(
@@ -73,10 +72,10 @@ def simple_job_example():
    my_op()
 ```
 
-</TabItem>
+  </TabItem>
   <TabItem value="repository">
 
-例: `@repository`でアセットを使った設定
+Example: 資産を使用する`@repository`の設定
 
 ```python
 from dagster_wandb import wandb_artifacts_io_manager, wandb_resource
@@ -103,45 +102,45 @@ def my_repository():
                    {"api_key": {"env": "WANDB_API_KEY"}}
                ),
                "wandb_artifacts_manager": wandb_artifacts_io_manager.configured(
-                   {"cache_duration_in_minutes": 60} # 1時間だけファイルをキャッシュする
+                   {"cache_duration_in_minutes": 60} # ファイルを1時間のみキャッシュ
                ),
            },
            resource_config_by_key={
                "wandb_config": {
                    "config": {
-                       "entity": "my_entity", # ここにあなたのW&Bエンティティを入れてください
-                       "project": "my_project", # ここにあなただのW&Bプロジェクトを入れてください
+                       "entity": "my_entity", # これをW&Bエンティティに置き換える
+                       "project": "my_project", # これをW&Bプロジェクト名に置き換える
                    }
                }
            },
        ),
    ]
 ```
+この例では、`@job`の例とは異なり、IO Managerのキャッシュ期間を設定しています。
 
-この例では、`@job`の例とは異なり、IOマネージャーのキャッシュ期間を設定しています。
-</TabItem>
+  </TabItem>
 </Tabs>
 
 ### 設定
-以下の設定オプションは、この統合によって提供されるW&B特有のDagsterリソースとIOマネージャに設定として使用されます。
+以下の設定オプションは、インテグレーションが提供するW&B-specificなDagsterリソースおよびIO Managerの設定として使用されます。
 
-* `wandb_resource`: W&B APIと通信するために使用されるDagster [resource](https://docs.dagster.io/concepts/resources) 。提供されたAPIキーを使用して自動的に認証します。プロパティ:
-    * `api_key`: （str, 必須）：W&B APIと通信するために必要なW&B APIキー。
-    * `host`: （str, 任意）：使用したいAPIホストサーバー。W&Bサーバーを使用している場合のみ必要です。デフォルトはパブリッククラウドホスト： [https://api.wandb.ai](https://api.wandb.ai) です。
-* `wandb_artifacts_io_manager`: W&Bアーティファクトを消費するためのDagster [IO Manager](https://docs.dagster.io/concepts/io-management/io-managers)。プロパティ:
-    * `base_dir`: （int, 任意）ローカルストレージとキャッシュに使用されるベースディレクトリー。 W&BアーティファクトとW&B Runログは、このディレクトリーから書き込みと読み込みが行われます。デフォルトでは、`DAGSTER_HOME`ディレクトリーを使用しています。
-    * `cache_duration_in_minutes`: （int, 任意）ローカルストレージにW&BアーティファクトとW&B Runログを保持する時間を定義します。この時間が経過しても開かれなかったファイルやディレクトリーのみがキャッシュから削除されます。キャッシュの消去はIOマネージャの実行が終了した後に行われます。キャッシュを完全に無効にする場合は、0に設定できます。キャッシュは、同じマシン上で複数のジョブ間でアーティファクトが再利用される際の速度向上に役立ちます。デフォルトでは30日間に設定されています。
-    * `run_id`: (str, 任意): このrunの一意のIDで、再開時に使用されます。プロジェクト内で一意でなければならず、runを削除するとIDを再利用することはできません。短い説明名のためのnameフィールドを使用するか、ランとハイパーパラメーターを比較するためのconfigを使用します。IDには次の特殊文字を含めることができません： `/\#?%:..`  Dagster内で実験トラッキングを行う際には、Run IDを設定して、IOマネージャがrunを再開できるようにする必要があります。デフォルトではDagster Run IDに設定されています。例：`7e4df022-1bf2-44b5-a383-bb852df4077e`
-    * `run_name`: （str, 任意）このrunの短い表示名で、UI上でこのrunを識別する方法です。デフォルトでは、以下のフォーマットの文字列に設定されています。`dagster-run-[Dagster Run IDの最初の8文字]` 例：`dagster-run-7e4df022`
-    * `run_tags`: （list[str], 任意）：UI上のこのrunのタグリストに表示される文字列のリスト。タグは、run同士をまとめたり、一時的なラベル（`baseline`や`production`など）を適用するのに便利です。UIでタグを追加/削除したり、特定のタグのあるrunのみをフィルタリングすることが簡単です。統合によって使用されるすべてのW&B Runには`dagster_wandb`タグが付けられます。
+* `wandb_resource`: W&B APIと通信するために使用されるDagster [リソース](https://docs.dagster.io/concepts/resources)。提供されたAPIキーを使用して自動認証します。プロパティ:
+    * `api_key`: (str, 必須): W&B APIと通信するために必要なW&B APIキー。
+    * `host`: (str, 任意): 使用するAPIホストサーバー。W&B Serverを使用する場合のみ必要です。デフォルトはPublic Cloudホスト: [https://api.wandb.ai](https://api.wandb.ai)
+* `wandb_artifacts_io_manager`: W&B Artifactsを消費するためのDagster [IO Manager](https://docs.dagster.io/concepts/io-management/io-managers)。プロパティ:
+    * `base_dir`: (int, 任意) ローカルストレージとキャッシングに使用されるベースディレクトリ。W&B ArtifactsおよびW&B Runログはそのディレクトリから読み書きされます。デフォルトは`DAGSTER_HOME`ディレクトリです。
+    * `cache_duration_in_minutes`: (int, 任意) W&B ArtifactsおよびW&B Runログがローカルストレージに保持される時間を定義します。その時間内に開かれなかったファイルとディレクトリのみがキャッシュから削除されます。キャッシュのパージはIOマネージャーの実行終了時に行われます。キャッシュを完全に無効にしたい場合は0に設定してください。キャッシュは、同じマシンで実行されるジョブ間でアーティファクトが再利用される場合に速度を向上させます。デフォルトは30日です。
+    * `run_id`: (str, 任意): このランの一意のIDで、再開に使用されます。プロジェクト内で一意でなければならず、ランを削除するとIDを再利用できません。名前フィールドには短い説明名を使用するか、run間でハイパーパラメータを比較するためにconfigを使用してください。IDには次の特殊文字を含めることはできません: `/\#?%:..`。実験追跡をDagster内で行う場合、IOマネージャーを使用してランを再開するためにRun IDを設定する必要があります。デフォルトではDagster Run IDに設定されています。例: `7e4df022-1bf2-44b5-a383-bb852df4077e`。
+    * `run_name`: (str, 任意) このランの短い表示名です。UIでこのランを識別するために使用します。デフォルトでは、次の形式の文字列に設定されています dagster-run-[最初のDagster Run IDの8文字] 例: `dagster-run-7e4df022`。
+    * `run_tags`: (list[str], 任意): このランのUIに表示されるタグのリストです。タグはランをまとめたり、一時的なラベルを適用するために便利です。ランをフィルタリングする際に特定のタグを持つランだけに絞り込むことができます。インテグレーションで使用されるすべてのW&B Runには、`dagster_wandb`タグが付きます。
 
-## W&Bアーティファクトを使用する
+## W&B Artifactsの使用
 
-W&Bアーティファクトとの統合は、Dagster IOマネージャに依存しています。
+W&B ArtifactとのインテグレーションはDagster IO Managerに依存しています。
 
-[IO Managers](https://docs.dagster.io/concepts/io-management/io-managers)は、ユーザーが提供するオブジェクトであり、アセットやopの出力を格納し、それを下流のアセットやopに入力として読み込む責任があります。例えば、IOマネージャは、ファイルシステム上のファイルからオブジェクトを格納したり、読み込んだりすることができます。
+[IO Managers](https://docs.dagster.io/concepts/io-management/io-managers) は、資産やopの出力を保存し、下流の資産やopに入力として読み込む責任を負うユーザー提供のオブジェクトです。例えば、IO Managerはファイルシステム上のファイルからオブジェクトを保存および読み込みすることができます。
 
-この統合では、W&BアーティファクトのためのIOマネージャが提供されています。これにより、任意のDagster `@op`や`@asset`でW&Bアーティファクトをネイティブに作成および消費することができます。以下は、Pythonリストを含むデータセットタイプのW&Bアーティファクトを生成する`@asset`の簡単な例です。
+インテグレーションはW&B Artifacts用のIO Managerを提供します。これにより、任意のDagster `@op`または`@asset`がネイティブにW&B Artifactsを作成および消費できます。以下はPythonリストを含むデータセットタイプのW&B Artifactを生成する`@asset`の簡単な例です。
 
 ```python
 @asset(
@@ -154,30 +153,31 @@ W&Bアーティファクトとの統合は、Dagster IOマネージャに依存�
     io_manager_key="wandb_artifacts_manager",
 )
 def create_dataset():
-    return [1, 2, 3] # これはアーティファクトに格納されます
+    return [1, 2, 3] # これはArtifactに保存されます
 ```
-`@op`、`@asset`、`@multi_asset` をメタデータ設定で注釈付けして、アーティファクトを書き込むことができます。同様に、Dagsterの外で作成されたW&Bアーティファクトも消費できます。
 
-## W&Bアーティファクトを書き込む
-続ける前に、W&Bアーティファクトの使い方をしっかり理解することをお勧めします。[アーティファクトのガイド](../artifacts/intro.md)を読んでみてください。
+`@op`、`@asset`、および`@multi_asset`をメタデータ設定で注釈し、Artifactsを書き込むことができます。同様に、Dagster外で作成されたW&B Artifactsを消費することもできます。
 
-Python関数からオブジェクトを返すことで、W&Bアーティファクトを書き込むことができます。W&Bでは以下のオブジェクトがサポートされています。
-* Pythonオブジェクト（int、dict、list...）
-* W&Bオブジェクト（Table、Image、Graph...）
-* W&Bアーティファクトオブジェクト
+## W&B Artifactsの書き込み
+続ける前に、W&B Artifactsの使用方法を十分に理解していることを推奨します。[Artifactsに関するガイド](../artifacts/intro.md)を読むことを検討してください。
 
-以下の例では、Dagsterアセット（`@asset`）でW&Bアーティファクトを書き込む方法を示しています。
+Python関数からオブジェクトを返すことで、W&B Artifactを書き込むことができます。W&Bがサポートするオブジェクトは以下の通りです:
+* Pythonオブジェクト (int, dict, list…)
+* W&Bオブジェクト (Table, Image, Graph…)
+* W&B Artifactオブジェクト
+
+以下の例では、Dagsterの資産 (`@asset`) を使用してW&B Artifactsを書き込む方法を示します。
 
 <Tabs
   defaultValue="python_objects"
   values={[
-    {label: 'Pythonオブジェクト', value: 'python_objects'},
-    {label: 'W&Bオブジェクト', value: 'wb_object'},
-    {label: 'W&Bアーティファクト', value: 'wb_artifact'},
+    {label: 'Python objects', value: 'python_objects'},
+    {label: 'W&B object', value: 'wb_object'},
+    {label: 'W&B Artifacts', value: 'wb_artifact'},
   ]}>
   <TabItem value="python_objects">
 
-[pickle](https://docs.python.org/3/library/pickle.html)モジュールでシリアライズできるものは、すべてピクル化され、インテグレーションによって作成されたアーティファクトに追加されます。その内容は、Dagster内でそのアーティファクトを読むときにアンピクル化されます（詳細は[アーティファクトの読み取り](#read-wb-artifacts)を参照してください）。
+[ピクル](https://docs.python.org/3/library/pickle.html) モジュールでシリアル化できるものは何でもピクルされ、インテグレーションによって作成されたアーティファクトに追加されます。内容はDagster内でそのアーティファクトを読むときにunpickleされます（詳細については [Read artifacts](#read-wb-artifacts) を参照してください）。
 
 ```python
 @asset(
@@ -192,12 +192,13 @@ Python関数からオブジェクトを返すことで、W&Bアーティファ�
 def create_dataset():
     return [1, 2, 3]
 ```
-W&Bは、複数のPickleベースのシリアル化モジュール([pickle](https://docs.python.org/3/library/pickle.html)、[dill](https://github.com/uqfoundation/dill)、[cloudpickle](https://github.com/cloudpipe/cloudpickle)、[joblib](https://github.com/joblib/joblib))をサポートしています。また、[ONNX](https://onnx.ai/)や[PMML](https://en.wikipedia.org/wiki/Predictive_Model_Markup_Language)のようなより高度なシリアル化も利用できます。詳細は[シリアル化](#serialization-configuration)セクションを参照してください。
+
+W&Bは複数のピクルベースのシリアル化モジュール（[pickle](https://docs.python.org/3/library/pickle.html)、[dill](https://github.com/uqfoundation/dill)、[cloudpickle](https://github.com/cloudpipe/cloudpickle)、[joblib](https://github.com/joblib/joblib)）をサポートしています。さらに高度なシリアル化として [ONNX](https://onnx.ai/) や [PMML](https://en.wikipedia.org/wiki/Predictive_Model_Markup_Language) も使用できます。詳細については [Serialization](#serialization-configuration) セクションを参照してください。
 
   </TabItem>
   <TabItem value="wb_object">
 
-W&Bのネイティブオブジェクト（例: [Table](../../ref/python/data-types/table.md)、[Image](../../ref/python/data-types/image.md)、[Graph](../../ref/python/data-types/graph.md)）は、このインテグレーションによって作成されたアーティファクトに追加されます。以下に、Tableを使用した例を示します。
+ネイティブのW&Bオブジェクト（例: [Table](../../ref/python/data-types/table.md)、[Image](../../ref/python/data-types/image.md)、[Graph](../../ref/python/data-types/graph.md)）はインテグレーションによって作成されたアーティファクトに追加されます。以下はTableを使用する例です。
 
 ```python
 import wandb
@@ -218,10 +219,11 @@ def create_dataset_in_table():
   </TabItem>
   <TabItem value="wb_artifact">
 
-複雑なユースケースでは、独自のArtifactオブジェクトを構築する必要があるかもしれません。このインテグレーションは、両方のインテグレーションのメタデータを拡張する便利な追加機能も提供しています。
+複雑なユースケースでは、独自のアーティファクトオブジェクトを構築する必要がある場合があります。この場合でも、インテグレーションはメタデータを両側に追加する便利な機能を提供します。
 
 ```python
 import wandb
+
 MY_ASSET = "my_asset"
 
 @asset(
@@ -238,26 +240,25 @@ def create_artifact():
   </TabItem>
 </Tabs>
 
-
 ### 設定
-`@op`、`@asset`、`@multi_asset`に、wandb_artifact_configurationという名前の設定辞書を設定することができます。この辞書は、メタデータとしてデコレータ引数に渡す必要があります。この設定は、W&BアーティファクトのIOマネージャーの読み込みと書き込みを制御するために必要です。
+`@op`、`@asset`および`@multi_asset`には、`wandb_artifact_configuration`と呼ばれる設定辞書をメタデータとしてデコレータ引数に渡すことができます。この設定はW&B ArtifactsのIO Managerの読み書きを制御するためのものです。
 
-`@op`の場合、[Out](https://docs.dagster.io/_apidocs/ops#dagster.Out)メタデータ引数を介した出力メタデータに位置しています。
-`@asset`の場合、アセットのメタデータ引数に位置しています。
-`@multi_asset`の場合、[AssetOut](https://docs.dagster.io/_apidocs/assets#dagster.AssetOut)メタデータ引数を介した各出力メタデータに位置しています。
+`@op`の場合、これは [Out](https://docs.dagster.io/_apidocs/ops#dagster.Out) メタデータ引数を通じて出力メタデータにあります。 
+`@asset`の場合、資産のメタデータ引数にあります。
+`@multi_asset`の場合、各出力メタデータ ([AssetOut](https://docs.dagster.io/_apidocs/assets#dagster.AssetOut) メタデータ引数) にあります。
 
-以下のコード例では、`@op`、`@asset`、`@multi_asset`計算に辞書を設定する方法を示しています：
+以下のコード例では、`@op`、`@asset`および`@multi_asset`の計算に辞書を設定する方法を示しています。
 
 <Tabs
   defaultValue="op"
   values={[
-    {label: '@opの例', value: 'op'},
-    {label: '@assetの例', value: 'asset'},
-    {label: '@multi_assetの例', value: 'multi_asset'},
+    {label: 'Example for @op', value: 'op'},
+    {label: 'Example for @asset', value: 'asset'},
+    {label: 'Example for @multi_asset', value: 'multi_asset'},
   ]}>
   <TabItem value="op">
 
-`@op`の例:
+Example for `@op`:
 ```python 
 @op(
    out=Out(
@@ -276,7 +277,7 @@ def create_dataset():
   </TabItem>
   <TabItem value="asset">
 
-`@asset`の例:
+Example for `@asset`:
 ```python
 @asset(
    name="my_artifact",
@@ -290,12 +291,13 @@ def create_dataset():
 def create_dataset():
    return [1, 2, 3]
 ```
-設定で名前を渡す必要はありません。なぜなら、@アーティファクトはすでに名前を持っているからです。インテグレーションはアーティファクト名をアセット名に設定します。
+
+名前は設定を経由して渡す必要はありません。@assetには既に名前があります。インテグレーションはアーティファクト名を資産名として設定します。
 
   </TabItem>
   <TabItem value="multi_asset">
 
-`@multi_asset` の例：
+Example for `@multi_asset`:
 
 ```python
 @multi_asset(
@@ -324,28 +326,25 @@ def create_datasets():
    first_table = wandb.Table(columns=["a", "b", "c"], data=[[1, 2, 3]])
    second_table = wandb.Table(columns=["d", "e"], data=[[4, 5]])
 
-
-return first_table, second_table
+   return first_table, second_table
 ```
 
   </TabItem>
 </Tabs>
 
+サポートされているプロパティ:
+* `name`: (str) このアーティファクトの人間が読める名前。UIでこのアーティファクトを識別したり、use_artifactコールで参照するために使用されます。名前には文字、数字、アンダースコア、ハイフン、ドットを含むことができます。プロジェクト内で一意でなければなりません。`@op`では必須です。
+* `type`: (str) アーティファクトのタイプ。アーティファクトを整理し、区別するために使用されます。一般的なタイプにはdatasetやmodelがありますが、任意の文字列を使用できます。出力がすでにアーティファクトでない場合、必須です。
+* `description`: (str) アーティファクトの説明を提供するフリーテキスト。説明はUIでマークダウンとしてレンダリングされるため、表やリンクなどを配置するのに適しています。
+* `aliases`: (list[str]) アーティファクトに適用したい一つ以上のエイリアスを含む配列。インテグレーションはセットされているかどうかにかかわらず、「latest」タグもそのリストに追加します。これは、モデルやデータセットのバージョン管理に効果的な方法です。
+* [`add_dirs`](../../ref/python/artifact.md#add_dir): (list[dict[str, Any]]): アーティファクトに含める各ローカルディレクトリの設定を含む配列。SDKの同名のメソッドと同じ引数をサポートします。
+* [`add_files`](../../ref/python/artifact.md#add_file): (list[dict[str, Any]]): アーティファクトに含める各ローカルファイルの設定を含む配列。SDKの同名のメソッドと同じ引数をサポートします。
+* [`add_references`](../../ref/python/artifact.md#add_reference): (list[dict[str, Any]]): アーティファクトに含める各外部参照の設定を含む配列。SDKの同名のメソッドと同じ引数をサポートします。
+* `serialization_module`: (dict) 使用するシリアル化モジュールの設定。詳細についてはシリアル化セクションを参照してください。
+    * `name`: (str) シリアル化モジュールの名前。受け入れ可能な値: `pickle`, `dill`, `cloudpickle`, `joblib`。モジュールはローカルで利用可能である必要があります。
+    * `parameters`: (dict[str, Any]) シリアル化関数に渡される任意の引数。モジュールのdumpメソッドの引数と同じ引数を受け入れます。例: `{"compress": 3, "protocol": 4}`。
 
-
-サポートされるプロパティ:
-* `name`: (str) このアーティファクトの人間が読める名前。UIでこのアーティファクトを識別したり、`use_artifact`呼び出しで参照するための方法です。名前には文字、数字、アンダースコア、ハイフン、ドットが含まれていることができます。プロジェクト全体で一意である必要があります。 `@op`に必要。
-* `type`: (str) アーティファクトのタイプで、アーティファクトを整理し、区別するために使用されます。一般的なタイプには、データセットやモデルなどがありますが、文字、数字、アンダースコア、ハイフン、ドットを含む任意の文字列を使用できます。出力がすでにアーティファクトでない場合に必要。
-* `description`: (str) アーティファクトの説明を提供するフリーテキスト。この説明はUIでマークダウンとして表示されるため、表やリンクなどを表示するのに適しています。
-* `aliases`: (list[str]) アーティファクトに適用したいエイリアスを1つまたは複数含む配列。統合では、「latest」タグもリストに追加されます（設定されていなくても）。これは、モデルやデータセットのバージョン管理を行う効果的な方法です。
-* [`add_dirs`](../../ref/python/artifact.md#add_dir): (list[dict[str, Any]]): アーティファクトに含めるローカルディレクトリの構成を含む配列。SDKの同名メソッドと同じ引数をサポートします。
-* [`add_files`](../../ref/python/artifact.md#add_file): (list[dict[str, Any]]): アーティファクトに含めるローカルファイルの構成を含む配列。SDKの同名メソッドと同じ引数をサポートします。
-* [`add_references`](../../ref/python/artifact.md#add_reference): (list[dict[str, Any]]): アーティファクトに含める外部参照の各構成を含む配列。SDKの同名メソッドと同じ引数をサポートします。
-* `serialization_module`: (dict) 使用されるシリアル化モジュールの構成。詳細については、シリアル化セクションを参照してください。
-    * `name`: (str) シリアル化モジュールの名前。受け入れられる値：`pickle`、`dill`、`cloudpickle`、`joblib`。ローカルで利用可能である必要があります。
-    * `parameters`: (dict[str, Any]) シリアル化機能に渡されるオプション引数。そのモジュールのdumpメソッドと同じパラメータを受け入れます。例：`{"compress": 3, "protocol": 4}`。
-
-高度な例：
+高度な例:
 ```python
 @asset(
    name="my_advanced_artifact",
@@ -388,43 +387,78 @@ def create_advanced_artifact():
    return [1, 2, 3]
 ```
 
-このアセットは、両方の統合部分で有用なメタデータとともに具体化されます。
-* W&B側：ソース統合名とバージョン、使用されたPythonバージョン、ピクルプロトコルバージョンなど。
-* Dagster側：
+資産は両側の統合に有用なメタデータで具体化されます:
+* W&B側: ソースインテグレーションの名前とバージョン、使用されたPythonバージョン、ピクルプロトコルバージョンなど。
+* Dagster側:
     * Dagster Run ID
-    * W&B Run：ID、名前、パス、URL
-    * W&Bアーティファクト：ID、名前、タイプ、バージョン、サイズ、URL
-    * W&Bエンティティ
-    * W&Bプロジェクト
+    * W&B Run: ID、名前、パス、URL
+    * W&B Artifact: ID、名前、タイプ、バージョン、サイズ、URL
+    * W&B Entity
+    * W&B Project
 
-以下の画像は、Dagsterアセットに追加されたW&Bからのメタデータを示しています。この情報は、統合がなければ利用できません。
+次の画像は、統合によりDagster資産に追加されたW&Bのメタデータを示しています。この情報は統合なしでは利用できません。
 
 ![](/images/integrations/dagster_wb_metadata.png)
 
-次の画像は、提供された設定がW&Bアーティファクトで役立つメタデータを使用してどのように強化されたかを示しています。この情報は、再現性とメンテナンスに役立ちます。統合がなければ利用できません。
+次の画像は、提供された設定がW&B Artifactの有用なメタデータで豊かにされたことを示しています。この情報は再現性とメンテナンスに役立ちます。それは統合なしでは利用できません。
 
 ![](/images/integrations/dagster_inte_1.png)
 ![](/images/integrations/dagster_inte_2.png)
 ![](/images/integrations/dagster_inte_3.png)
 
-
 :::info
-mypyのような静的型チェッカーを使用している場合は、次のようにして設定型定義オブジェクトをインポートしてください。
+mypyのような静的型チェックツールを使用する場合、設定タイプ定義オブジェクトを次のようにインポートしてください:
+
 ```python
 from dagster_wandb import WandbArtifactConfiguration
 ```
 :::
 
-## W&Bアーティファクトの読み込み
-W&Bアーティファクトの読み込みは、書き込むのと同様です。`wandb_artifact_configuration`という設定ディクショナリを`@op`か`@asset`に設定できます。唯一の違いは、出力ではなく入力に設定を行う必要がある点です。
+### パーティションの使用
 
-`@op`の場合、入力メタデータを通じて[In](https://docs.dagster.io/_apidocs/ops#dagster.In)メタデータ引数である入力メタデータに位置しています。アーティファクトの名前を明示的に渡す必要があります。
+インテグレーションはネイティブで [Dagster partitions](https://docs.dagster.io/concepts/partitions-schedules-sensors/partitions) をサポートします。
 
-`@asset`の場合、入力メタデータを通じて[Asset](https://docs.dagster.io/_apidocs/assets#dagster.AssetIn)Inメタデータ引数に位置しています。親アセットの名前がそれに一致するはずなので、アーティファクト名を渡すべきではありません。
+以下は `DailyPartitionsDefinition` を使用してパーティションされている例です。
+```python
+@asset(
+    partitions_def=DailyPartitionsDefinition(start_date="2023-01-01", end_date="2023-02-01"),
+    name="my_daily_partitioned_asset",
+    compute_kind="wandb",
+    metadata={
+        "wandb_artifact_configuration": {
+            "type": "dataset",
+        }
+    },
+)
+def create_my_daily_partitioned_asset(context):
+    partition_key = context.asset_partition_key_for_output()
+    context.log.info(f"{partition_key}のためのパーティション化された資産を作成しています")
+    return random.randint(0, 100)
+```
+このコードは各パーティションごとに1つのW&B Artifactを生成します。それらは資産名の下でアーティファクトパネル（UI）に表示され、パーティションキーで区切られます。例えば`my_daily_partitioned_asset.2023-01-01`、`my_daily_partitioned_asset.2023-01-02`、`my_daily_partitioned_asset.2023-01-03`など。複数次元でパーティション化された資産は、各次元がドットで区切られます。例: `my_asset.car.blue`。
 
-統合の外部で作成されたアーティファクトに依存する場合は、[SourceAsset](https://docs.dagster.io/_apidocs/assets#dagster.SourceAsset)を使用する必要があります。それは常にそのアセットの最新のバージョンを読み込みます。
+:::caution
+インテグレーションは1つのrunで複数のパーティションを具体化させることを許可していません。資産を具体化させるために複数のrunを実行する必要があります。Dagitで資産を具体化する際に実行することができます。
 
-以下の例は、さまざまなopからアーティファクトを読み込む方法を示しています。
+![](/images/integrations/dagster_multiple_runs.png)
+:::
+
+#### 高度な使用法
+- [パーティショーンドジョブ](https://github.com/dagster-io/dagster/blob/master/examples/with_wandb/with_wandb/ops/partitioned_job.py)
+- [シンプルなパーティショーンド資産](https://github.com/wandb/dagster/blob/master/examples/with_wandb/with_wandb/assets/simple_partitions_example.py)
+- [複数パーティショーンド資産](https://github.com/wandb/dagster/blob/master/examples/with_wandb/with_wandb/assets/multi_partitions_example.py)
+- [高度なパーティション使用](https://github.com/wandb/dagster/blob/master/examples/with_wandb/with_wandb/assets/advanced_partitions_example.py)
+
+## W&B Artifacts を読む
+W&B Artifactsを読むのは書くのと似ています。設定辞書 `wandb_artifact_configuration` を`@op`または`@asset`に設定できます。違いは、出力の代わりに入力に設定することです。
+
+`@op`の場合、入力メタデータを通して [In](https://docs.dagster.io/_apidocs/ops#dagster.In) メタデータ引数に設定されます。アーティファクトの名前を明示的に渡す必要があります。
+
+`@asset`の場合、入力メタデータを通して [Asset](https://docs.dagster.io/_apidocs/assets#dagster.AssetIn) Inメタデータ引数に設定されます。親資産の名前と一致すべきなので、アーティファクト名を渡す必要はありません。
+
+統合外で作成されたアーティファクトに依存関係を持たせたい場合 [SourceAsset](https://docs.dagster.io/_apidocs/assets#dagster.SourceAsset) を使用する必要があります。常にその資産の最新バージョンを読み込みます。
+
+以下の例では、さまざまなopsからアーティファクトを読む方法を示します。
 
 <Tabs
   defaultValue="op"
@@ -435,7 +469,7 @@ W&Bアーティファクトの読み込みは、書き込むのと同様です�
   ]}>
   <TabItem value="op">
 
-`@op`からアーティファクトを読み込む
+`@op`からアーティファクトを読む
 ```python
 @op(
    ins={
@@ -452,16 +486,17 @@ W&Bアーティファクトの読み込みは、書き込むのと同様です�
 def read_artifact(context, artifact):
    context.log.info(artifact)
 ```
-</TabItem>
+
+  </TabItem>
   <TabItem value="asset">
 
-他の `@asset` によって作成されたアーティファクトの読み込み
+他の`@asset`によって作成されたアーティファクトを読む
 ```python
 @asset(
    name="my_asset",
    ins={
        "artifact": AssetIn(
-           # 入力引数の名前を変更したくない場合は、'key' を削除できます
+           # 入力引数名を変更したくない場合、'key'を削除できます
            key="parent_dagster_asset_name",
            input_manager_key="wandb_artifacts_manager",
        )
@@ -474,14 +509,15 @@ def read_artifact(context, artifact):
   </TabItem>
   <TabItem value="outside_dagster">
 
-Dagsterの外部で作成されたアーティファクトの読み込み：
+Dagster外で作成されたアーティファクトを読む:
 
 ```python
 my_artifact = SourceAsset(
-   key=AssetKey("my_artifact"),  # W&Bアーティファクトの名前
-   description="Dagsterの外部で作成されたアーティファクト",
+   key=AssetKey("my_artifact"),  # W&B アーティファクトの名前
+   description="Dagster外で作成されたアーティファクト",
    io_manager_key="wandb_artifacts_manager",
 )
+
 @asset
 def read_artifact(context, my_artifact):
    context.log.info(my_artifact)
@@ -490,11 +526,10 @@ def read_artifact(context, my_artifact):
   </TabItem>
 </Tabs>
 
-
 ### 設定
-上記の設定は、IOマネージャが収集してデコレートされた関数に提供するべき入力を示すために使用されます。次のリードパターンがサポートされています。
+以下の設定は、IO マネージャーが収集して、装飾関数への入力として提供する内容を示しています。以下の読み取りパターンがサポートされています。
 
-1. アーティファクト内に含まれる名前付きオブジェクトを取得するには、getを使用します。
+1. アーティファクト内の名前付きオブジェクトを取得するには、get を使用します:
 
 ```python
 @asset(
@@ -513,7 +548,9 @@ def read_artifact(context, my_artifact):
 def get_table(context, table):
    context.log.info(table.get_column("a"))
 ```
-2. Artifact内のダウンロード済みファイルのローカルパスを取得するには、get_pathを使用します：
+
+2. アーティファクト内のダウンロードされたファイルのローカルパスを取得するには、get_path を使用します:
+
 ```python
 @asset(
    ins={
@@ -532,7 +569,7 @@ def get_path(context, path):
    context.log.info(path)
 ```
 
-3. コンテンツがローカルにダウンロードされたArtifactオブジェクト全体を取得するには：
+3. アーティファクトオブジェクト全体を取得する (内容はローカルにダウンロードされます):
 ```python
 @asset(
    ins={
@@ -546,32 +583,28 @@ def get_artifact(context, artifact):
    context.log.info(artifact.name)
 ```
 
-
-
 サポートされているプロパティ
+* `get`: (str) 指定された相対名のアーティファクトにあるW&Bオブジェクトを取得します。
+* `get_path`: (str) 指定された相対名のアーティファクトにあるファイルへのパスを取得します。
 
-* `get`: (str) アーティファクトの相対名にあるW&Bオブジェクトを取得します。
-* `get_path`: (str) アーティファクトの相対名にあるファイルへのパスを取得します。
+### シリアル化設定
+デフォルトでは、インテグレーションは標準の [pickle](https://docs.python.org/3/library/pickle.html) モジュールを使用しますが、一部のオブジェクトはそれと互換性がありません。たとえば、yield を含む関数をピクルしようとするとエラーが発生します。
 
-### シリアライズ設定
-デフォルトでは、このインテグレーションでは標準の[pickle](https://docs.python.org/3/library/pickle.html)モジュールを使用しますが、一部のオブジェクトはそれと互換性がありません。例えば、yieldを持つ関数は、pickleしようとするとエラーが発生します。
+ピクルベースのシリアル化モジュール（[dill](https://github.com/uqfoundation/dill)、[cloudpickle](https://github.com/cloudpipe/cloudpickle)、[joblib](https://github.com/joblib/joblib)）をサポートしています。さらに [ONNX](https://onnx.ai/) や [PMML](https://en.wikipedia.org/wiki/Predictive_Model_Markup_Language) のような高度なシリアル化もサポートしています。それらを使用するには、シリアル化された文字列を返すか、直接アーティファクトを作成する必要があります。使用ケースに応じて適切なものを選んでください。この主題に関する利用可能な文献を参照してください。
 
-ありがたいことに、より多くのPickleベースのシリアライゼーションモジュール([dill](https://github.com/uqfoundation/dill)、[cloudpickle](https://github.com/cloudpipe/cloudpickle)、[joblib](https://github.com/joblib/joblib))をサポートしています。また、シリアル化された文字列を返すか、Artifactを直接作成することで、[ONNX](https://onnx.ai/)や[PMML](https://en.wikipedia.org/wiki/Predictive_Model_Markup_Language)のような高度なシリアル化も使用できます。適切な選択肢は、ユースケースによって異なりますので、この件に関する利用可能な文献を参照してください。
+### ピクルベースのシリアル化モジュール
 
-
-### Pickleベースのシリアリゼーションモジュール
-
-:::warning
-ピクリングは、安全性が低いことが知られています。 セキュリティが懸念される場合は、W＆Bオブジェクトのみを使用してください。 データに署名し、ハッシュキーを独自のシステムに保存することをお勧めします。 より複雑な使用例については、お気軽にお問い合わせください。喜んでお手伝いいたします。
+:::caution
+ピクルは既知のセキュリティリスクを伴います。セキュリティが懸念される場合は、W&Bオブジェクトのみを使用してください。データに署名し、ハッシュキーを自身のシステムに保存することをお勧めします。複雑なユースケースについては、お気軽にお問い合わせください。お手伝いさせていただきます。
 :::
 
-`wandb_artifact_configuration`の`serialization_module`ディクショナリを通じて、使用されるシリアライズが設定できます。Dagsterを実行しているマシンでモジュールが利用可能であることを確認してください。
+シリアル化を設定するには、`wandb_artifact_configuration`の`serialization_module`辞書を使用して設定します。実行するマシンでモジュールが利用可能であることを確認してください。
 
-インテグレーションは、そのアーティファクトを読むときにどのシリアル化モジュールを使用するかを自動的に認識します。
+インテグレーションは、そのアーティファクトを読む時に適切なシリアル化モジュールを自動的に認識します。
 
-現在サポートされているモジュールは、pickle、dill、cloudpickle、およびjoblibです。
+現在サポートされているモジュールは、pickle、dill、cloudpickle、joblibです。
 
-以下は、joblibでシリアル化された「モデル」を作成し、それを推論に使用する簡略化された例です。
+以下は、joblibでシリアル化された「モデル」を作成し、それを推論に使用する簡単な例です。
 
 ```python
 @asset(
@@ -588,9 +621,9 @@ def get_artifact(context, artifact):
     io_manager_key="wandb_artifacts_manager",
 )
 def create_model_serialized_with_joblib():
-    # これは実際のMLモデルではありませんが、pickleモジュールでは不可能です
+    # これは本当のMLモデルではありませんが、ピクルモジュールでは不可能です
     return lambda x, y: x + y
-```
+
 @asset(
     name="inference_result_from_joblib_serialized_model",
     compute_kind="Python",
@@ -610,17 +643,18 @@ def use_model_serialized_with_joblib(
     context: OpExecutionContext, my_joblib_serialized_model
 ):
     inference_result = my_joblib_serialized_model(1, 2)
-    context.log.info(inference_result)  # 出力：3
+    context.log.info(inference_result)  # 出力: 3
     return inference_result
 ```
 
-### 高度なシリアル化形式（ONNX、PMML）
-ONNXやPMMLのような共通ファイル形式を使用することが一般的です。このインテグレーションもこれらの形式をサポートしていますが、Pickleベースのシリアル化よりも少し手間がかかります。
+### 高度なシリアル化フォーマット (ONNX、PMML)
+ONNXやPMMLのような交換ファイル形式を使用することは一般的です。インテグレーションはそれらの形式をサポートしていますが、ピクルベースのシリアル化とは異なる方法が必要です。
 
-それらのフォーマットを使用するには、2つの異なる方法があります。
-1. モデルを選択した形式に変換し、その形式の文字列表現を通常のPythonオブジェクトであるかのように返します。インテグレーションはその文字列をピクルします。その文字列を使用してモデルを再構築できます。
-2. シリアル化されたモデルを含む新しいローカルファイルを作成し、add_file設定でそのファイルを使用してカスタムアーティファクトを構築します。
-以下は、Scikit-learnモデルがONNXを使用してシリアル化される例です。
+2つの異なる方法があります。
+1. モデルを選択した形式に変換し、その形式の文字列表現を通常のPythonオブジェクトのように返します。インテグレーションがその文字列をピクルします。その文字列を使用してモデルを再構築できます。
+2. シリアル化されたモデルを含む新しいローカルファイルを作成し、そのファイルを使用してカスタムArtifactを構築します。
+
+以下は、Scikit-learnモデルを使用してONNXを使用してシリアル化する例です。
 
 ```python
 import numpy
@@ -656,9 +690,9 @@ from dagster import AssetIn, AssetOut, asset, multi_asset
     group_name="onnx_example",
 )
 def create_onnx_model():
-    # https://onnx.ai/sklearn-onnx/ からのインスピレーション
-```
-# モデルをトレーニングする
+    # https://onnx.ai/sklearn-onnx/ からインスパイアされた例
+
+    # モデルのトレーニング
     iris = load_iris()
     X, y = iris.data, iris.target
     X_train, X_test, y_train, y_test = train_test_split(X, y)
@@ -669,7 +703,7 @@ def create_onnx_model():
     initial_type = [("float_input", FloatTensorType([None, 4]))]
     onx = convert_sklearn(clr, initial_types=initial_type)
 
-    # アーティファクト（モデル + テストセット）を書き込む
+    # アーティファクトを書き込み（モデル＋テストセット）
     return onx.SerializeToString(), {"X_test": X_test, "y_test": y_test}
 
 @asset(
@@ -686,8 +720,9 @@ def create_onnx_model():
     group_name="onnx_example",
 )
 def use_onnx_model(context, my_onnx_model, my_test_set):
-    # https://onnx.ai/sklearn-onnx/ から着想を得た
-# ONNXランタイムで予測を計算する
+    # https://onnx.ai/sklearn-onnx/ からインスパイアされた例
+
+    # ONNXランタイムでの予測を計算
     sess = rt.InferenceSession(my_onnx_model)
     input_name = sess.get_inputs()[0].name
     label_name = sess.get_outputs()[0].name
@@ -697,48 +732,158 @@ def use_onnx_model(context, my_onnx_model, my_test_set):
     context.log.info(pred_onx)
     return pred_onx
 ```
+### パーティションの使用
 
-<!-- ### 高度な使用法
-インテグレーションの高度な使用法については、以下の完全なコード例を参照してください:
-* アセットの高度な使用例: TODO: 
-* パーティション化されたジョブの例: TODO: リンク
-* モデルレジストリへのモデルのリンク: TODO: リンク -->
+インテグレーションはネイティブで [Dagster partitions](https://docs.dagster.io/concepts/partitions-schedules-sensors/partitions) をサポートします。
 
-## W&B Launchの使用法
+特定のパーティションまたはすべてのパーティションを選択的に読み込むことができます。
 
-:::warning
-アクティブ開発中のベータ製品
-Launchに興味がありますか？W&B Launchの顧客パイロットプログラムに参加するために、アカウントチームに連絡してください。
-パイロット顧客は、AWS EKSまたはSageMakerを使用する必要があります。最終的には、他のプラットフォームもサポートする予定です。
+すべてのパーティションは辞書で提供され、キーと値がパーティションキーとアーティファクトの内容を表します。
+
+<Tabs
+  defaultValue="all"
+  values={[
+    {label: 'Read all partitions', value: 'all'},
+    {label: 'Read specific partitions', value: 'specific'},
+  ]}>
+  <TabItem value="all">
+
+上流の `@asset` のすべてのパーティションを読み込み、それらは辞書で与えられます。この辞書では、キーと値がパーティションキーとアーティファクトの内容に対応します。
+```python
+@asset(
+    compute_kind="wandb",
+    ins={"my_daily_partitioned_asset": AssetIn()},
+    output_required=False,
+)
+def read_all_partitions(context, my_daily_partitioned_asset):
+    for partition, content in my_daily_partitioned_asset.items():
+        context.log.info(f"partition={partition}, content={content}")
+```
+  </TabItem>
+  <TabItem value="specific">
+
+`AssetIn` の `partition_mapping` 設定を使用すると、特定のパーティションを選択できます。この場合、 `TimeWindowPartitionMapping` を使用します。
+```python
+@asset(
+    partitions_def=DailyPartitionsDefinition(start_date="2023-01-01", end_date="2023-02-01"),
+    compute_kind="wandb",
+    ins={
+        "my_daily_partitioned_asset": AssetIn(
+            partition_mapping=TimeWindowPartitionMapping(start_offset=-1)
+        )
+    },
+    output_required=False,
+)
+def read_specific_partitions(context, my_daily_partitioned_asset):
+    for partition, content in my_daily_partitioned_asset.items():
+        context.log.info(f"partition={partition}, content={content}")
+```
+  </TabItem>
+</Tabs>
+
+設定オブジェクト `metadata` は、Weights & Biases (wandb) がプロジェクト内の異なるアーティファクトパーティションとどのように対話するかを設定します。
+
+オブジェクト `metadata` には `wandb_artifact_configuration` という名前のキーがあり、その中にはさらにネストされたオブジェクト `partitions` があります。
+
+この `partitions` オブジェクトは、各パーティションの名前をその設定にマッピングします。各パーティションの設定は、それを取得する方法を指定できます。これらの設定には `get`、`version`、`alias` などのキーが含まれることがあります。
+
+**設定キー**
+
+1. `get`:
+`get`キーは、データを取得するW&Bオブジェクト（Table, Imageなど）名を指定します。
+2. `version`:
+`version`キーは、アーティファクトの特定のバージョンを取得したい場合に使用します。
+3. `alias`:
+`alias`キーは、エイリアスでアーティファクトを取得するのに使用します。
+
+**ワイルドカード設定**
+
+ワイルドカード `"*"` は、設定されていないすべてのパーティションを意味します。これは、明示的に `partitions` オブジェクトに記載されていないパーティションのためのデフォルト設定を提供します。
+
+例えば、
+
+```python
+"*": {
+    "get": "default_table_name",
+},
+```
+この設定は、明示的に設定されていないすべてのパーティションについて、データが `default_table_name` という名前のテーブルから取得されることを意味します。
+
+**特定のパーティション設定**
+
+特定のパーティションのための設定をそのキーを使用して提供することで、ワイルドカード設定を上書きできます。
+
+例えば、
+
+```python
+"yellow": {
+    "get": "custom_table_name",
+},
+```
+この設定は、`yellow`という名前のパーティションについて、データが `custom_table_name` という名前のテーブルから取得されることを意味しています。ワイルドカード設定を上書きすることになります。
+
+**バージョン管理およびエイリアス**
+
+バージョン管理およびエイリアスのために、`version`および`alias`キーを設定内で指定できます。
+
+例えば、
+```python
+"orange": {
+    "version": "v0",
+},
+```
+この設定は、`orange`アーティファクトパーティションのバージョン`v0`からデータを取得します。
+
+エイリアスの場合、
+```python
+"blue": {
+    "alias": "special_alias",
+},
+```
+この設定は、エイリアス`special_alias`（設定内で`blue`と呼ばれる）を持つアーティファクトパーティションの`default_table_name`テーブルからデータを取得します。
+
+### 高度な使用法
+インテグレーションの高度な使用方法を見るには、以下の完全なコード例を参照してください:
+* [資産の高度な使用例](https://github.com/dagster-io/dagster/blob/master/examples/with_wandb/with_wandb/assets/advanced_example.py)
+* [パーティショーンドジョブ例](https://github.com/dagster-io/dagster/blob/master/examples/with_wandb/with_wandb/ops/partitioned_job.py)
+* [モデルをモデルレジストリにリンクする例](https://github.com/dagster-io/dagster/blob/master/examples/with_wandb/with_wandb/assets/model_registry_example.py)
+
+## W&B Launchの使用
+
+:::caution
+アクティブな開発中のベータプロダクト
+Launchに興味がありますか？W&B Launchのカスタマーパイロットプログラムに参加するために、アカウントチームにご連絡ください。
+パイロット顧客はAWS EKSまたはSageMakerを使用する必要があります。最終的には、追加のプラットフォームをサポートする予定です。
 :::
 
-続ける前に、W&B Launchの使い方について十分に理解しておくことをお勧めします。Launchに関するガイドを読むことを検討してください: https://docs.wandb.ai/guides/launch.
+続ける前に、W&B Launchの使用方法を十分に理解することをお勧めします。[Launcherのガイド](https://docs.wandb.ai/guides/launch)を読んでください。
 
-Dagsterとの統合は以下のように役立ちます:
-* Dagsterインスタンスで1つまたは複数のLaunchエージェントを実行する。
+Dagsterのインテグレーションでは以下のことができます:
+* Dagsterインスタンス内でLaunchエージェントを実行する。
 * Dagsterインスタンス内でローカルLaunchジョブを実行する。
-* オンプレミスまたはクラウドでのリモートLaunchジョブ。
-### エージェントの起動
-この統合により、 `run_launch_agent` という名前のインポート可能な `@op` が提供されます。 Launch Agentを起動し、手動で停止するまで長時間実行を続けるプロセスとして実行します。
+* オンプレミスまたはクラウドでのリモートLaunchジョブを実行する。
 
-エージェントは、ローンチキューをポーリングし、ジョブを順番に実行するプロセスです（または外部サービスにジョブをディスパッチして実行させます）。
+### Launchエージェント
+インテグレーションは、`run_launch_agent`というインポート可能な`@op`を提供します。Launchエージェントを起動し、手動で停止されるまで長時間実行プロセスとして実行します。
 
-<!-- 設定に関する参考ドキュメントを参照してください: TODO: リンク -->
+エージェントはLaunchキューをポーリングし、ジョブを実行する（または外部サービスにディスパッチする）プロセスです。
 
-Launchpad内ですべてのプロパティの便利な説明を表示することもできます。
+設定については [リファレンス文書](../launch/intro.md) を参照してください。
+
+Launchpadでプロパティの有用な説明を表示することもできます。
 
 ![](/images/integrations/dagster_launch_agents.png)
 
-シンプルな例
+簡単な例
 ```python
-# これを config.yaml に追加
-# あるいは、DagitのLaunchpadやJobDefinition.execute_in_processで設定することもできます
-# 参考：https://docs.dagster.io/concepts/configuration/config-schema#specifying-runtime-configuration
+# config.yamlにこれを追加
+# あるいはDagit's LaunchpadまたはJobDefinition.execute_in_processで設定できます
+# リファレンス: https://docs.dagster.io/concepts/configuration/config-schema#specifying-runtime-configuration
 resources:
  wandb_config:
    config:
-     entity: my_entity # これをあなたのW&Bエンティティに置き換えます
-     project: my_project # これをあなたのW&Bプロジェクトに置き換えます
+     entity: my_entity # これをW&Bエンティティ名に置き換える
+     project: my_project # これをW&Bプロジェクト名に置き換える
 ops:
  run_launch_agent:
    config:
@@ -748,7 +893,6 @@ ops:
 
 from dagster_wandb.launch.ops import run_launch_agent
 from dagster_wandb.resources import wandb_resource
-
 
 from dagster import job, make_values_resource
 
@@ -767,29 +911,27 @@ def run_launch_agent_example():
    run_launch_agent()
 ```
 
-### ジョブの起動
-この統合では、`run_launch_job`というインポート可能な`@op`が提供されています。Launchジョブを実行します。
+### Launchジョブ
+インテグレーションは、`run_launch_job`というインポート可能な`@op`を提供します。これはLaunchジョブを実行します。
 
-Launchジョブは、実行されるためにキューに割り当てられます。キューを作成するか、デフォルトのキューを使用できます。そのキューをリッスンしているアクティブなエージェントがあることを確認してください。Dagsterインスタンス内でエージェントを実行することもできますが、Kubernetesでデプロイ可能なエージェントを使用することも検討してください。
+Launchジョブはキューに割り当てられ実行されます。キューを作成するか、デフォルトのキューを使用できます。キューを監視するアクティブなエージェントが必要です。エージェントをDagsterインスタンス内で実行することもできますが、Kubernetesで展開可能なエージェントの使用も検討できます。
 
-<!-- 設定に関しては、参照ドキュメントを参照してください: TODO: link -->
+設定については [リファレンス文書](../launch/intro.md) を参照してください。
 
-Launchpadのすべてのプロパティについても、役立つ説明を見ることができます。
+Launchpadでプロパティの有用な説明を表示することもできます。
 
 ![](/images/integrations/dagster_launch_jobs.png)
 
-
 簡単な例
 ```python
-
-# config.yamlにこれを追加してください
-# 代わりにDagitのLaunchpadやJobDefinition.execute_in_processで設定を行うこともできます
-# 参考: https://docs.dagster.io/concepts/configuration/config-schema#specifying-runtime-configuration
+# config.yamlにこれを追加
+# あるいはDagit's LaunchpadまたはJobDefinition.execute_in_processで設定できます
+# リファレンス: https://docs.dagster.io/concepts/configuration/config-schema#specifying-runtime-configuration
 resources:
  wandb_config:
    config:
-     entity: my_entity # ここをあなたのW&Bエンティティに置き換えてください
-     project: my_project # ここをあなたのW&Bプロジェクトに置き換えてください
+     entity: my_entity # これをW&Bエンティティ名に置き換える
+     project: my_project # これをW&Bプロジェクト名に置き換える
 ops:
  my_launched_job:
    config:
@@ -799,12 +941,10 @@ ops:
      queue: my_dagster_queue
      uri: https://github.com/wandb/example-dagster-integration-with-launch
 
-
 from dagster_wandb.launch.ops import run_launch_job
 from dagster_wandb.resources import wandb_resource
 
 from dagster import job, make_values_resource
-
 
 @job(resource_defs={
        "wandb_config": make_values_resource(
@@ -817,33 +957,34 @@ from dagster import job, make_values_resource
    },
 )
 def run_launch_job_example():
-   run_launch_job.alias("my_launched_job")() # エイリアスでジョブの名前を変更します
+   run_launch_job.alias("my_launched_job")()  # ジョブにエイリアスを付けて名前を変更します
 ```
+
 ## ベストプラクティス
 
-1. IOマネージャを使ってアーティファクトを読み書きする。
-[`Artifact.download()`](../../ref/python/artifact.md#download) や [`Run.log_artifact()`](../../ref/python/run.md#log_artifact) を直接使用する必要はありません。これらのメソッドはインテグレーションによって処理されます。単にアーティファクトに保存したいデータを返すだけで、インテグレーションが残りの処理を行います。これにより、W&B内でのアーティファクトの履歴が向上します。
+1. IO マネージャーを使用してアーティファクトを読み書きする。
+[`Artifact.download()`](../../ref/python/artifact.md#download) または [`Run.log_artifact()`](../../ref/python/run.md#log_artifact) を直接使用する必要はありません。これらのメソッドは統合で処理されます。保存したいデータを返すだけで、統合に任せます。これにより、W&Bのアーティファクトの系統が改善されます。
 
-2. 複雑なユースケースでのみ、自分でアーティファクトオブジェクトを作成する。
-PythonオブジェクトとW&Bオブジェクトは、あなたのops/assetsから返されるべきです。インテグレーションがアーティファクトのバンドルを処理します。
-複雑なユースケースでは、Dagsterのジョブ内で直接アーティファクトを作成することができます。メタデータの豊富さを提供するために、ソースのインテグレーション名、バージョン、使用されるPythonバージョン、pickeプロトコルバージョンなどの情報が含まれるアーティファクトオブジェクトをインテグレーションに渡すことをお勧めします。
+2. 複雑なユースケースではない限り、アーティファクトオブジェクトを直接構築しない。
+PythonオブジェクトおよびW&Bオブジェクトは、ops/assetsから返されるべきです。統合がアーティファクトのパッケージングを処理します。
+複雑なユースケースでは、Dagsterジョブ内で直接アーティファクトを構築できます。ソースインテグレーションの名前とバージョン、使用されたPythonバージョン、ピクルプロトコルバージョンなどのメタデータをインテグレーションで拡充することをお勧めします。
 
-3. メタデータを通じてファイル、ディレクトリ、外部参照をアーティファクトに追加する。
-インテグレーションの `wandb_artifact_configuration` オブジェクトを使って、任意のファイル、ディレクトリ、外部参照（Amazon S3、GCS、HTTPなど）を追加してください。詳しくは、[アーティファクト設定セクション](#configuration-1)の高度な例を参照してください。
+3. メタデータを通じてファイル、ディレクトリおよび外部参照をアーティファクトに追加する。
+統合の `wandb_artifact_configuration` オブジェクトを使用して、任意のファイル、ディレクトリまたは外部参照（Amazon S3、GCS、HTTPなど）を追加します。詳細については [Artifact 設定セクション](#configuration-1) の高度な例を参照してください。
 
-4. アーティファクトが生成される際に、@opの代わりに@assetを使用する。
-アーティファクトはアセットです。Dagsterがそのアセットを維持する場合は、アセットを使用することをお勧めします。これにより、Dagitアセットカタログでの観測性が向上します。
+4. アーティファクトが生成される場合は、@asset を使用する。
+アーティファクトは資産です。Dagsterで資産を管理する場合は、資産を使用することをお勧めします。これにより、Dagit資産カタログでの可視性が向上します。
 
-5. SourceAssetを使用して、Dagsterの外部で作成されたアーティファクトを使用する。
-これにより、外部で作成されたアーティファクトを読み込むためのインテグレーションを活用できます。それ以外の場合は、インテグレーションによって作成されたアーティファクトのみを使用することができます。
+5. SourceAsset を使用して、Dagster外で作成されたアーティファクトを消費する。
+これにより、統合の利点を利用して外部で作成されたアーティファクトを読み込むことができます。それ以外の場合、統合で作成されたアーティファクトのみを使用できます。
 
-6. 大きなモデルのためにはW&B Launchを使用して、専用のコンピュータでのトレーニングを管理する。
-小さなモデルはDagsterクラスター内でトレーニングすることができ、DagsterをGPUノードを持つKubernetesクラスターで実行することができます。大規模なモデルトレーニングには、W&B Launchの使用をお勧めします。これにより、インスタンスへの過負荷を防ぎ、より適切なコンピューティングが利用可能になります。
+6. 大規模なモデルには、専用のコンピュータでのトレーニングを調整するためにW&B Launchを使用する。
+小規模なモデルはDaksterクラスター内でトレーニングできます。DagsterをGPUノードを持つKubernetesクラスターで実行することもできます。大規模なモデルのトレーニングにはW&B Launchを使用することをお勧めします。これにより、インスタンスの過負荷を防ぎ、より適切なコンピュータにアクセスできます。
 
-7. Dagster内での実験トラッキング時に、W&B Run IDをDagster Run IDの値に設定する。
-[Runを再開可能](../runs/resuming.md)にし、W&B Run IDをDagster Run IDまたは任意の文字列に設定することをお勧めします。この勧告に従うことで、Dagster内でモデルをトレーニングする際に、W&BのメトリクスとW&Bアーティファクトが同じW&B Runに格納されることが確実になります。
+7. Dagster 内での実験追跡時には、W&B Run ID を Dagster Run ID と同じ値に設定する。
+[Runが再開可能](../runs/resuming.md) であることを確認し、W&B Run ID を Dakster Run ID または任意の文字列に設定することをお勧めします。この推奨事項に従うことで、Dagster内でモデルをトレーニングする際に、W&B のメトリクスと W&B のアーティファクトが同じ W&B Run に保存されます。
 
-　Dagster Run IDをW&B Run IDに設定します。
+W&B Run ID を Dagster Run ID に設定します。
 ```python
 wandb.init(
     id=context.run_id,
@@ -851,8 +992,8 @@ wandb.init(
     ...
 )
 ```
-自分のW&B Run IDを選択し、IO Managerの設定に渡してください。
 
+または、独自のW&B Run IDを選択して、IOマネージャー設定に渡します。
 ```python
 wandb.init(
     id="my_resumable_run_id",
@@ -869,12 +1010,9 @@ wandb.init(
 )
 ```
 
-8. 大規模なW&Bアーティファクトの場合、必要なデータのみをgetまたはget_pathで収集してください。
+8. 大規模なW&Bアーティファクトの場合、必要なデータのみをgetまたはget_pathで収集する。
+デフォルトでは、インテグレーションはアーティファクト全体をダウンロードします。非常に大きなアーティファクトを使用している場合、必要な特定のファイルやオブジェクトのみを収集することを検討すると良いでしょう。これにより、速度とリソースの利用効率が向上します。
 
-デフォルトでは、統合はアーティファクト全体をダウンロードします。非常に大きなアーティファクトを使用している場合は、必要な特定のファイルやオブジェクトのみを収集することをお勧めします。これにより、速度とリソースの利用効率が向上します。
+9. Pythonオブジェクトの場合、ピクルモジュールをユースケースに合わせて調整する。
+デフォルトでは、W&Bインテグレーションは標準の [pickle](https://docs.python.org/3/library/pickle.html) モジュールを使用します。しかし、一部のオブジェクトはそれと互換性がありません。例えば、yieldを含む関数をピクルしようとするとエラーが発生します。W&Bは他のピクルベースのシリアル化モジュール（[dill](https://github.com/uqfoundation/dill)、[cloudpickle](https://github.com/cloudpipe/cloudpickle)、[joblib](https://github.com/joblib/joblib)）をサポートしています。
 
-9. Pythonオブジェクトには、用途に応じてpicklingモジュールを適応させてください。
-
-デフォルトでは、W&B統合は標準の[pickle](https://docs.python.org/3/library/pickle.html)モジュールを使用します。ただし、一部のオブジェクトはそれと互換性がありません。例えば、yieldが含まれる関数は、pickle化しようとするとエラーが発生します。W&Bは、他のPickleベースのシリアライゼーションモジュール([dill](https://github.com/uqfoundation/dill), [cloudpickle](https://github.com/cloudpipe/cloudpickle), [joblib](https://github.com/joblib/joblib))にも対応しています。
-
-また、[ONNX](https://onnx.ai/)や[PMML](https://en.wikipedia.org/wiki/Predictive_Model_Markup_Language)のような、より高度なシリアライゼーションを使用することもできます。シリアライズされた文字列を返すか、Artifactを直接作成します。適切な選択は、ユースケースによって異なります。この件に関する利用可能な文献を参照してください。

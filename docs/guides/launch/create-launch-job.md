@@ -1,272 +1,170 @@
 ---
 displayed_sidebar: default
 ---
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-
-# Create a launch job
-
-A job is a blueprint that contains contextual information about a W&B run it is created from; such as the run's source code, software dependencies, hyperparameters, artifact version, and so forth.
-
-Once you have a launch job, you can add them to a pre-configured [launch queue](./launch-terminology.md#launch-queue). The launch agent that was deployed by you or someone on your team, will poll that queue and send the job (as a Docker image) to the compute resource that was configured on launch queue.
+import { CTAButtons } from '@site/src/components/CTAButtons/CTAButtons.tsx';
 
 
-There are three ways to create a launch job:
+# Launch ジョブの作成
+<CTAButtons colabLink="https://colab.research.google.com/drive/1wX0OSVxZJDHRsZaOaOEDx-lLUrO1hHgP"/>
 
-* With a Python script
-* With a Docker image
-* With Git repository
+LaunchジョブはW&B runsを再現するためのブループリントです。ジョブは、ワークロードを実行するために必要なソースコード、依存関係、および入力をキャプチャするW&B Artifactsです。
 
-The following sections show how to create a job based on each use case. 
+`wandb launch`コマンドを使用してジョブを作成および実行します。
 
-
-## Before you get started 
-Before you create a launch job, find out the name of your queue and the entity it belongs to. Then, follow these instructions to find out the status of your queue and to check if an agent is polling that queue:
-
-1. Navigate to [wandb.ai/launch](https://wandb.ai/launch).
-2. From the **All entities** dropdown, select the entity the launch queue belongs to. 
-This will filter queues based on W&B entities.
-3. From the filtered results, check that the queue exists.
-4. Hover your mouse to the right of the launch queue and select `View queue`.
-5. Select the **Agents** tab. Within the **Agents** tab you sill see a list of Agent IDs and their statuses. Ensure that one of the agent IDs has a **polling** status.
-
-
-## Create a job with a W&B artifact
-
-<Tabs
-  defaultValue="cli"
-  values={[
-    {label: 'CLI', value: 'cli'},
-    {label: 'Python SDK', value: 'sdk'}
-  ]}>
-  <TabItem value="cli">
-
-
-Create a launch job with with the  W&B CLI. 
-
-Ensure the path with your Python script has a `requirements.txt` file with the Python dependencies required to run your code. A Python runtime is also required. The python runtime can either be specified manually with the runtime parameter or can be auto-detected from a `runtime.txt` or `.python-version file`.
-
-Copy and paste the following code snippet. Replace the values within `"<>"` based on your use case:
-
-```bash
-wandb job create --project "<project-name>" -e "<your-entity>" \ 
---name "<name-for-job>" code "<path-to-script/code.py>"
-```
-
-For a full list of flags you can use, see the `wandb job create` command documentation. 
-
-:::note
-You do not need to use the `run.log_code()` function within your Python script when you create a launch job with the W&B CLI.
+:::情報
+実行のためにジョブを送信せずにジョブを作成するには、`wandb job create`コマンドを使用します。詳細については、[command reference docs](../../ref/cli/wandb-job/wandb-job-create.md)を参照してください。
 :::
 
+## Gitジョブ
 
-  </TabItem>
-  <TabItem value="sdk">
+W&B Launchを使って、リモートgitリポジトリ内の特定のコミット、ブランチ、またはタグからコードや他のトラックされたアセットをクローンするGitベースのジョブを作成できます。`--uri`または`-u`フラグを使用してコードを含むURIを指定し、オプションで`--build-context`フラグを使用してサブディレクトリを指定します。
 
-Log your code as an artifact to create a launch job. To do so, log your code to your run as an artifact with `run.log_code()`.
+次のコマンドを使って、gitリポジトリから"hello world"ジョブを実行します：
 
-The following sample Python code shows how to integrate the `run.log_code()` function (see highlighted portion) into a Python script.
-
-```python title="create_simple_job.py"
-import random
-import wandb
-
-
-def run_training_run(epochs, lr):
-    settings = wandb.Settings(job_source="artifact")
-    run = wandb.init(
-        project="launch_demo",
-        job_type="eval",
-        settings=settings,
-        entity="<your-entity>",
-        # Simulate tracking hyperparameters
-        config={
-            "learning_rate": lr,
-            "epochs": epochs,
-        },
-    )
-
-    offset = random.random() / 5
-    print(f"lr: {lr}")
-
-    for epoch in range(2, epochs):
-        # simulating a training run
-        acc = 1 - 2**-epoch - random.random() / epoch - offset
-        loss = 2**-epoch + random.random() / epoch + offset
-        wandb.log({"acc": acc, "loss": loss})
-
-    # highlight-next-line
-    run.log_code()
-    run.finish()
-
-
-run_training_run(epochs=10, lr=0.01)
+```bash
+wandb launch --uri "https://github.com/wandb/launch-jobs.git" --build-context jobs/hello_world --dockerfile Dockerfile.wandb --project "hello-world" --job-name "hello-world" --entry-point "python job.py"
 ```
 
-You can specify a name for your job with the `WANDB_JOB_NAME` environment variable. You can also specify a name by setting the `job_name` parameter in `wandb.Settings` and passing it to `wandb.init`. For example:
+このコマンドは次のことを行います：
+1. [W&B Launch jobs repository](https://github.com/wandb/launch-jobs) を一時ディレクトリにクローンします。
+2. **hello** プロジェクトで **hello-world-git** という名前のジョブを作成します。ジョブはリポジトリのデフォルトブランチの先頭のコミットと関連付けられます。
+3. `jobs/hello_world`ディレクトリと`Dockerfile.wandb`からコンテナイメージをビルドします。
+4. コンテナを起動し、`python job.py`を実行します。
+
+特定のブランチまたはコミットハッシュからジョブを作成するには、`-g`、`--git-hash`引数を追加します。引数の完全な一覧を見るには、`wandb launch --help`を実行してください。
+
+### リモートURL形式
+
+Launchジョブに関連付けられたgitリモートは、HTTPS URL または SSH URL のいずれかです。URLのタイプはジョブソースコードを取得するプロトコルを決定します。
+
+| リモートURLタイプ | URL形式 | アクセスと認証の要件 |
+| ----------------- | -------- | -------------------- |
+| https             | `https://github.com/organization/repository.git` | gitリモートで認証するためのユーザー名とパスワード |
+| ssh               | `git@github.com:organization/repository.git` | gitリモートで認証するためのsshキー |
+
+ホスティングプロバイダーによって正確なURL形式は異なることに注意してください。`wandb launch --uri` で作成したジョブは、指定された `--uri` に指定された転送プロトコルを使用します。
+
+## コードアーティファクトジョブ
+
+JobsはW&B Artifactsに保存された任意のソースコードから作成できます。アーティファクトとジョブの新しいコードを作成するには、`--uri`または`-u`引数を使用してローカルディレクトリを指定します。
+
+まず、空のディレクトリを作成し、次の内容のPythonスクリプト`main.py`を追加します：
 
 ```python
-settings = wandb.Settings(job_name="my-job-name")
-wandb.init(settings=settings)
+import wandb
+
+with wandb.init() as run:
+    run.log({"metric": 0.5})
 ```
 
- If you do not specify a name, W&B will automatically generate a launch job name for you. It will create a job name with the following format: `job-<code-artifact-name>`. 
+次の内容の`requirements.txt`ファイルを追加します：
 
-
-
-For more information on the `run.log_code()` command, see the API Reference guide.
-
-  </TabItem>
-</Tabs>
-
-
-
-
-## Create a job with a Docker image
-Create a job with a Docker image with the W&B CLI or by creating a Docker container from the image. To create an image-based job, you must first create the Docker image. The Docker image should contain the source code (such as the Dockerfile, requirements.txt file, and so on) required to execute the W&B run. 
-
-As an example, suppose we have a directory called [`fashion_mnist_train`](https://github.com/wandb/launch-jobs/tree/main/jobs/fashion_mnist_train) with the following directory structure:
-
-
-```
-fashion_mnist_train
-│   data_loader.py
-│   Dockerfile
-│   job.py
-│   requirements.txt
-└───configs
-│   │   example.yml
+```txt
+wandb>=0.17.1
 ```
 
-We create a Docker image called `fashion-mnist` with the `docker build` command:
+次のコマンドでディレクトリをコードアーティファクトとしてログし、ジョブを開始します：
 
 ```bash
-docker build . -t fashion-mnist 
+wandb launch --uri . --job-name hello-world-code --project launch-quickstart --entry-point "python main.py"
 ```
-For more information on how to build Docker images, see the [Docker build reference documentation](https://docs.docker.com/engine/reference/commandline/build/). 
 
+このコマンドは次のことを行います：
+1. 現在のディレクトリを`hello-world-code`という名前のコードアーティファクトとしてログします。
+2. `launch-quickstart`プロジェクトに`hello-world-code`という名前のジョブを作成します。
+3. 現在のディレクトリからLaunchのデフォルトDockerfileを使ってコンテナイメージをビルドします。デフォルトのDockerfileは`requirements.txt`ファイルをインストールし、エントリーポイントを`python main.py`に設定します。
 
-<Tabs
-  defaultValue="cli"
-  values={[
-    {label: 'W&B CLI', value: 'cli'},
-    {label: 'Docker run', value: 'build'},
-  ]}>
-  <TabItem value="cli">
+## イメージジョブ
 
-Create a launch job with the W&B CLI. Copy the following code snippet and replace the values within `"<>"` based on your use case:
+もう一つの方法として、予め作成されたDockerイメージからジョブをビルドすることもできます。これは、MLコードのための既存のビルドシステムを持っている場合や、ハイパーパラメータや異なるインフラストラクチャースケールを使って実験したいが、コードや要件を調整する必要がない場合に便利です。
+
+イメージはDockerレジストリからプルされ、指定されたエントリーポイント（指定されていない場合はデフォルトのエントリーポイント）で実行されます。Dockerイメージからジョブを作成および実行するために、`--docker-image`オプションに完全なイメージタグを渡します。
+
+以下のコマンドを使用して、プレメイドイメージからシンプルなジョブを実行します：
 
 ```bash
-wandb job create --project "<project-name>" --entity "<your-entity>" \ 
---name "<name-for-job>" image image-name:tag
+wandb launch --docker-image "wandb/job_hello_world:main" --project "hello-world"
 ```
 
-For a full list of flags you can use, see the `wandb job create` command documentation.
+## 自動ジョブ作成
 
-  </TabItem>
-  <TabItem value="build">
+W&Bは、Launchで作成されていない場合でも、トラックされたソースコードを持つジョブを自動的に作成して追跡します。次の条件のいずれかを満たす場合、runsはトラックされたソースコードを持つとみなされます：
+- runに関連するgitリモートおよびコミットハッシュがある
+- コードアーティファクトをログした（詳細は[`Run.log_code`](../../ref/python/run.md#log_code)を参照）
+- `WANDB_DOCKER`環境変数がイメージタグに設定されたDockerコンテナでrunが実行された
 
-Associate your run with a Docker image. W&B will look for an image tag in the `WANDB_DOCKER` environment variable, and if `WANDB_DOCKER` is set, a job will be created from the specified image tag. Ensure that the `WANDB_DOCKER` environment variable is set to the full image tag.
+LaunchジョブがW&B runによって自動的に作成された場合、GitリモートURLはローカルgitリポジトリから推測されます。
 
+### Launchジョブの名前
 
-Create a launch job by building a Docker container from a Docker image. Copy the following code snippet and replace the values within `"<>"` based on your use case:
+デフォルトでは、W&Bは自動的にジョブ名を生成します。名前はジョブの作成方法（GitHub、コードアーティファクト、またはDockerイメージ）に基づいて生成されます。代わりに、環境変数またはW&B Python SDKを使用してLaunchジョブの名前を定義することができます。
 
-```bash
-docker run -e WANDB_PROJECT="<project-name>" \
--e WANDB_ENTITY="<your-entity>" \
--e WANDB_API_KEY="<your-w&B-api-key>" \
--e WANDB_DOCKER="<docker-image-name>" image:tag
-```
+次の表は、ジョブソースに基づいてデフォルトで使用される命名規則について説明しています：
 
-You can specify a name for your job with the `WANDB_JOB_NAME` environment variable. If you do not specify a name, W&B will automatically generate a launch job name for you. W&B will create a job name with the following format: `job-<image>-<name>`. 
- 
-:::tip
-Make sure you specify is set to the full image tag. For example, if your agent will run images from an ECR repository, you should set `WANDB_DOCKER` to the full image tag, including the ECR repository URL: `123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:develop`. The docker tag, in this case `'develop'`, is added as an alias to the resulting job.
-:::
-
-
-
-  </TabItem>
-</Tabs>
-
-
-
-## Create a job with Git
-Create a Git-based job with W&B Launch. Code and other assets are cloned from a certain commit, branch, or tag in a git repository.
-
-<Tabs
-  defaultValue="cli"
-  values={[
-    {label: 'CLI', value: 'cli'},
-    {label: 'Autogenerate from git commit', value: 'git'},
-  ]}>
-  <TabItem value="cli">
-
-```bash
-wandb job create --project "<project-name>" --entity "<your-entity>" \ 
---name "<name-for-job>" git https://github.com/repo-name \ 
---entry-point "<path-to-script/code.py>"
-```
-
-  </TabItem>
-  <TabItem value="git">
-
-Ensure the path with your Python script has a `requirements.txt` file with the Python dependencies required to run your code. A Python runtime is also required. The python runtime can either be specified manually with the runtime parameter or can be auto-detected from a `runtime.txt` or `.python-version file`.
-
-
-You can specify a name for your job with the `WANDB_JOB_NAME` environment variable. If you do not specify a name, W&B will automatically generate a launch job name for you. It will create a job name with the following format: `job-<git-remote-url>-<path-to-script>`. 
-
-</TabItem>
-</Tabs>
-
-
-
-## Launch job names
-
-By default, W&B automatically generates a job name for you. The name is generated depending on how the job is created (GitHub, code artifact, or Docker image). Alternatively, you can define a launch job's name with environment variables or with the W&B Python SDK.
-
-### Default launch job names
-
-The following table describes the job naming convention used by default based on job source:
-
-| Source        | Naming convention                       |
+| ソース         | 命名規則                                |
 | ------------- | --------------------------------------- |
 | GitHub        | `job-<git-remote-url>-<path-to-script>` |
 | Code artifact | `job-<code-artifact-name>`              |
 | Docker image  | `job-<image-name>`                      |
 
-
-### Name your launch job
-Name your job with a W&B environment variable or with the W&B Python SDK
+W&B環境変数またはW&B Python SDKを使用してジョブの名前を設定します。
 
 <Tabs
-  defaultValue="env_var"
-  values={[
-    {label: 'Environment variable', value: 'env_var'},
-    {label: 'W&B Python SDK', value: 'python_sdk'},
-  ]}>
-  <TabItem value="env_var">
+defaultValue="env_var"
+values={[
+{label: 'Environment variable', value: 'env_var'},
+{label: 'W&B Python SDK', value: 'python_sdk'},
+]}>
+<TabItem value="env_var">
 
-Set the `WANDB_JOB_NAME` environment variable to your preferred job name. For example:
+環境変数`WANDB_JOB_NAME`を使って好みのジョブ名を設定します。例えば：
 
 ```bash
 WANDB_JOB_NAME=awesome-job-name
 ```
 
-  </TabItem>
-  <TabItem value="python_sdk">
+</TabItem>
+<TabItem value="python_sdk">
 
-Define the name of your job with `wandb.Settings`. Then pass this object when you initialize W&B with `wandb.init`. For example:
+`wandb.Settings`を使用してジョブの名前を定義します。その後、このオブジェクトを`wandb.init`でW&Bを初期化する際に渡します。例えば：
 
 ```python
 settings = wandb.Settings(job_name="my-job-name")
 wandb.init(settings=settings)
 ```
 
-  </TabItem>
+</TabItem>
 </Tabs>
 
-
 :::note
-For docker image jobs, the version alias is automatically added as an alias to the job.
+Dockerイメージジョブの場合、バージョンエイリアスが自動的にジョブのエイリアスとして追加されます。
 :::
+
+## コンテナ化
+
+ジョブはコンテナ内で実行されます。イメージジョブはプレビルドされたDockerイメージを使用し、Gitやコードアーティファクトジョブはコンテナビルドステップが必要です。
+
+ジョブのコンテナ化は、`wandb launch`の引数とジョブソースコード内のファイルでカスタマイズできます。
+
+### ビルドコンテキスト
+
+ビルドコンテキストとは、コンテナイメージをビルドするためにDockerデーモンに送信されるファイルとディレクトリのツリーを指します。デフォルトでは、Launchはジョブソースコードのルートをビルドコンテキストとして使用します。サブディレクトリをビルドコンテキストとして指定するには、ジョブを作成および開始するときに`wandb launch`の`--build-context`引数を使用します。
+
+:::tip
+`--build-context`引数は、複数のProjectsを持つモノリポを参照するGitジョブで作業する際に特に便利です。サブディレクトリをビルドコンテキストとして指定することで、モノリポ内の特定のProjectのためのコンテナイメージをビルドできます。
+
+公式のW&B Launch jobs repositoryを使用した例については、[上記の例](#git-jobs)を参照してください。
+:::
+
+### Dockerfile
+
+DockerfileはDockerイメージをビルドするための指示を含むテキストファイルです。デフォルトでは、Launchは`requirements.txt`ファイルをインストールするデフォルトのDockerfileを使用します。カスタムDockerfileを使用するには、`wandb launch`の`--dockerfile`引数でファイルのパスを指定します。
+
+Dockerfileのパスはビルドコンテキストに対して相対的に指定します。例えば、ビルドコンテキストが`jobs/hello_world`で、Dockerfileが`jobs/hello_world`ディレクトリにある場合、`--dockerfile`引数は`Dockerfile.wandb`に設定されるべきです。公式のW&B Launch jobs repositoryを使用した例については、[上記の例](#git-jobs)を参照してください。
+
+### Requirementsファイル
+
+カスタムDockerfileが提供されていない場合、LaunchはPython依存関係をインストールするビルドコンテキストを検索します。ビルドコンテキストのルートに`requirements.txt`ファイルが見つかった場合、Launchはファイルに記載された依存関係をインストールします。そうでない場合は、`pyproject.toml`ファイルが見つかった場合、Launchは`project.dependencies`セクションから依存関係をインストールします。

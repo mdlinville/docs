@@ -1,228 +1,202 @@
 ---
 displayed_sidebar: default
 ---
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Advanced agent set up
-How you configure the launch agent will depend on numerous factors. One of those factors is whether or not the launch agent will build an image for you. 
 
-:::tip
-The W&B launch agent will build an image for you if you provide a Git repo based or artifact based jobs.
+# Advanced agent setup
+
+このガイドでは、W&B Launch エージェントをセットアップして、異なる環境でコンテナイメージをビルドする方法について説明します。
+
+:::info
+ビルドは git と code artifact ジョブにのみ必要です。イメージジョブにはビルドは必要ありません。
+
+ジョブタイプの詳細については [Create a launch job](./create-launch-job.md) を参照してください。
 :::
-
-In the simplest use case, you provide an image-based launch job that is executed in a launch queue target environment that has access to your image repository More requirements must be satisfied if you use the launch agent to build images for you. 
-
 
 ## Builders
-Launch agents build images for W&B artifacts and Git repo sourced jobs. This means that the launch agent config file (`launch-config.yaml`) must have a builder option specified. W&B Launch supports two builders: Kaniko and Docker. 
 
-We suggest that you use either Kaniko or Docker based on the following scenarios:
+Launch エージェントは [Docker](https://docs.docker.com/) または [Kaniko](https://github.com/GoogleContainerTools/kaniko) を使用してイメージをビルドできます。
 
-* Kaniko: Use Kaniko when the agent polls launch queues in a Kubernetes cluster
-* Docker: Use Docker for all other cases.
+* Kaniko: 特権コンテナとしてビルドを実行することなく、Kubernetes でコンテナイメージをビルドします。
+* Docker: ローカルで `docker build` コマンドを実行してコンテナイメージをビルドします。
 
-### Docker
-We recommend that you use the Docker builder if you want the agent to build images on a local machine (that has Docker installed). Specify the Docker builder in the launch agent config with the builder key. 
+ビルダーのタイプは launch エージェント設定の `builder.type` キーで `docker`、`kaniko`、またはビルドを無効にする `noop` のいずれかに設定できます。デフォルトでは、エージェントの Helm チャートは `builder.type` を `noop` に設定します。`builder` セクションの追加キーはビルドプロセスの設定に使用されます。
 
-For example, the following YAML snippet shows how to specify this in a launch agent config file (`launch-config.yaml`):
+エージェント設定にビルダーが指定されていないか、動作する `docker` CLI が見つかった場合、エージェントはデフォルトで Docker を使用します。Docker が利用できない場合、エージェントはデフォルトで `noop` を使用します。
 
-```yaml title="launch-config.yaml"
-builder:
-  type: docker
-```
-
-### Kaniko
-To use the Kaniko builder, you must specify a container registry and environment option.
-
-For example, the following YAML snippet shows how to specify Kaniko in a launch agent config file (`launch-config.yaml`):
-
-```yaml title="launch-config.yaml"
-builder:
-  type: kaniko
-  build-context-store: s3://my-bucket/build-contexts/ 
-  build-job-name: wandb-image-build # Kubernetes job name prefix for all builds
-```
-<!-- For specific policies the Kaniko job can use to interact with the context store see Put in Bucket[LINK]. -->
-
-If you run a Kubernetes cluster other than using AKS, EKS, or GKE, you will need to create a Kubernetes secret that contains the credentials for your cloud environment.
-
-- To grant access to GCP, this secret should contain a [service account json](https://cloud.google.com/iam/docs/keys-create-delete#creating).
-- To grant access to AWS, this secret should contain an [AWS credentials file](https://docs.aws.amazon.com/sdk-for-php/v3/developer-guide/guide_credentials_profiles.html).
-
-Within your agent configuration file, and within the builder section, set the `secret-name` and `secret-key` keys to let Kaniko use the secrets:
-
-```yaml title="launch-config.yaml"
-builder:
-	type: kaniko
-  build-context-store: <my-build-context-store>
-  secret-name: <Kubernetes-secret-name>
-  secret-key: <secret-file-name>
-```
-
-:::note
-The Kaniko builder requires permissions to put data into cloud storage (such as Amazon S3) see the [Agent permissions](#agent-permissions) section for more information.
+:::tip
+Kubernetes クラスターでのイメージビルドには Kaniko を使用します。それ以外の場合には Docker を使用します。
 :::
 
-## Connect an agent to a cloud registry
-You can connect the launch agent to a cloud container registry such Amazon Elastic Container Registry (Amazon ECR), Google Artifact Registry on GCP, or Azure Container Registry. The following describes common use cases as to why you might want to connect the launch agent to a cloud container registry:
+## コンテナレジストリにプッシュする
 
-- you do not want to store images you are building on your local machine
-- you want to share images across multiple machines
-- if the agent builds an image for you and you use a cloud compute resource such as Amazon SageMaker or VertexAI.
+launch エージェントはビルドするすべてのイメージを一意のソースハッシュでタグ付けします。エージェントは `builder.destination` キーで指定されたレジストリにイメージをプッシュします。
 
+例えば、`builder.destination` キーが `my-registry.example.com/my-repository` に設定されている場合、エージェントはイメージを `my-registry.example.com/my-repository:<source-hash>` にタグ付けしてプッシュします。イメージがレジストリに既に存在する場合、ビルドはスキップされます。
 
-To connect the launch agent to a cloud container registry, you will need to provide additional information about the cloud environment and registry you want to use in the launch agent config. In addition, you will need to grant the agent permissions within the cloud environment to interact with required components based on your use case.
+### エージェント設定
 
-### Agent configuration
-Within your launch agent config (`launch-config.yaml`), provide the name of the target resource environment and the container registry for the `environment` and `registry` keys, respectively.
+エージェントを Helm チャート経由でデプロイする場合、エージェント設定は `values.yaml` ファイルの `agentConfig` キーで提供する必要があります。
 
-The following tabs demonstrates how to configure the launch agent based on your environment and registry.
+`wandb launch-agent` を使って自分でエージェントを起動する場合、`--config` フラグを使ってエージェント設定の YAML ファイルのパスを提供できます。デフォルトでは、設定は `~/.config/wandb/launch-config.yaml` から読み込まれます。
 
+launch エージェント設定 (`launch-config.yaml`) 内で、ターゲットリソース環境の名前とコンテナレジストリを `environment` キーおよび `registry` キーにそれぞれ指定します。
+
+以下のタブはあなたの環境とレジストリに基づいた launch エージェントの設定方法を示します。
 
 <Tabs
-  defaultValue="aws"
-  values={[
-    {label: 'AWS', value: 'aws'},
-    {label: 'GCP', value: 'gcp'},
-    {label: 'Azure', value: 'azure'},
-  ]}>
-  <TabItem value="aws">
+defaultValue="aws"
+values={[
+{label: 'Amazon Web Services', value: 'aws'},
+{label: 'Google Cloud', value: 'gcp'},
+{label: 'Azure', value: 'azure'},
+]}>
+<TabItem value="aws">
 
-The AWS environment configuration requires the region key to be set. The region should be the AWS region that the agent will be running in. When the agent starts, it will use boto3 to load the default AWS credentials. 
+AWS環境の設定では region キーが必要です。region はエージェントが実行される AWS のリージョンである必要があります。
 
 ```yaml title="launch-config.yaml"
 environment:
   type: aws
   region: <aws-region>
-registry:
-  type: ecr
-  # URI of the ECR repository where the agent will store images.
-  # Make sure the region matches what you have configured in your
-  # environment.
-  uri: <account-id>.ecr.<aws-region>.amazonaws.com/<repository-name>
-  # Alternatively, you can simply set the repository name
-  # repository: my-repository-name
+builder:
+  type: <kaniko|docker>
+  # エージェントがイメージを保存する ECR レポジトリのURI。
+  # リージョンがあなたの環境で設定したものと一致することを確認してください。
+  destination: <account-id>.ecr.<aws-region>.amazonaws.com/<repository-name>
+  # Kanikoを使用する場合、エージェントがビルドコンテキストを保存する
+  # S3バケットを指定してください。
+  build-context-store: s3://<bucket-name>/<path>
 ```
-See the [boto3 documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) for more information on how to configure default AWS credentials.
 
-  </TabItem>
-  <TabItem value="gcp">
+エージェントは boto3 を使用してデフォルトの AWS 認証情報をロードします。デフォルトの AWS 認証情報の設定方法については、[boto3 documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) を参照してください。
 
-The GCP environment requires the region and project keys to be set. The region should be the GCP region that the agent will be running in. The project should be the GCP project that the agent will be running in. When the agent starts, it will use `google.auth.default()` to load the default GCP credentials. 
+</TabItem>
+<TabItem value="gcp">
+
+Google Cloud 環境では region および project キーが必要です。`region` はエージェントが実行されるリージョンに設定してください。`project` はエージェントが実行される Google Cloud プロジェクトに設定してください。エージェントは Python の `google.auth.default()` を使用してデフォルトの認証情報をロードします。
 
 ```yaml title="launch-config.yaml"
 environment:
   type: gcp
   region: <gcp-region>
   project: <gcp-project-id>
-registry:
-  # Requires a gcp environment configuration.
-  type: gcr
-  # URI of the Artifact Registry repository and image name where the agent
-  # will store images. Make sure the region and project match what you have
-  # configured in your environment.
+builder:
+  type: <kaniko|docker>
+  # エージェントがイメージを保存するアーティファクトレジストリリポジトリおよびイメージ名のURI。
+  # リージョンとプロジェクトがあなたの環境で設定したものと一致することを確認してください。
   uri: <region>-docker.pkg.dev/<project-id>/<repository-name>/<image-name>
-  # Alternatively, you may set the repository and image-name keys.
-  # repository: my-artifact-repo
-  # image-name: my-image-name
+  # Kanikoを使用する場合、エージェントがビルドコンテキストを保存する
+  # GCSバケットを指定してください。
+  build-context-store: gs://<bucket-name>/<path>
 ```
 
-See the [`google-auth` documentation](https://google-auth.readthedocs.io/en/latest/reference/google.auth.html#google.auth.default for more information on how to configure default GCP credentials.
+デフォルトの GCP 認証情報がエージェントで利用可能になるように設定する方法の詳細については、[`google-auth` documentation](https://google-auth.readthedocs.io/en/latest/reference/google.auth.html#google.auth.default) を参照してください。
 
-  </TabItem>
-  <TabItem value="azure">
+</TabItem>
+<TabItem value="azure">
 
-The Azure environment does not require any additional keys to be set. When the agent starts, it will use `azure.identity.DefaultAzureCredential()` to load the default Azure credentials. 
+Azure 環境では追加のキーは必要ありません。エージェントが開始されると、`azure.identity.DefaultAzureCredential()` を使用してデフォルトの Azure 認証情報がロードされます。
 
 ```yaml title="launch-config.yaml"
 environment:
   type: azure
-registry:
-  type: acr
-  uri: https://my-registry.azurecr.io/my-repository
+builder:
+  type: <kaniko|docker>
+  # エージェントがイメージを保存する Azure Container Registry リポジトリのURI。
+  destination: https://<registry-name>.azurecr.io/<repository-name>
+  # Kanikoを使用する場合、エージェントがビルドコンテキストを保存する
+  # Azure Blob Storage コンテナを指定してください。
+  build-context-store: https://<storage-account-name>.blob.core.windows.net/<container-name>
 ```
 
-See the [`azure-identity` documentation](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential?view=azure-python) for more information on how to configure default Azure credentials.
-
-  </TabItem>
-</Tabs>
-
-
-## Agent permissions
-The agent permissions required will depend on your use case. The policies outlined below are used by launch agents.
-### Cloud registry permissions
-Below are the permissions that are generally required by launch agents to interact with cloud registries.
-
-<Tabs
-  defaultValue="aws"
-  values={[
-    {label: 'AWS', value: 'aws'},
-    {label: 'GCP', value: 'gcp'},
-    {label: 'Azure', value: 'azure'},
-  ]}>
-  <TabItem value="aws">
-
-```yaml
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:CreateRepository",
-        "ecr:UploadLayerPart",
-        "ecr:PutImage",
-        "ecr:CompleteLayerUpload",
-        "ecr:InitiateLayerUpload",
-        "ecr:DescribeRepositories",
-        "ecr:DescribeImages",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:BatchDeleteImage"
-      ],
-      "Resource": "arn:aws:ecr:<region>:<account-id>:repository/<repository>"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ecr:GetAuthorizationToken",
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-  </TabItem>
-  <TabItem value="gcp">
-
-```js
-artifactregistry.dockerimages.list
-artifactregistry.repositories.downloadArtifacts
-artifactregistry.repositories.list
-artifactregistry.repositories.uploadArtifacts
-```
-
-  </TabItem>
-  <TabItem value="azure">
-
-Add the [`AcrPush` role](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-roles?tabs=azure-cli#acrpush) if you use the Kaniko builder.
+デフォルトの Azure 認証情報の設定方法については、[`azure-identity` documentation](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential?view=azure-python) を参照してください。
 
 </TabItem>
 </Tabs>
 
-### Kaniko permissions
-The launch agent requires permission to push to cloud storage if the agent uses the Kaniko builder. Kaniko uses a context store outside of the pod running the build job.
+## エージェントの権限
 
+エージェントに必要な権限はユースケースによって異なります。
+
+### クラウドレジストリの権限
+
+以下に、launch エージェントがクラウドレジストリと対話するために通常必要な権限を示します。
 
 <Tabs
-  defaultValue="aws"
-  values={[
-    {label: 'AWS', value: 'aws'},
-    {label: 'GCP', value: 'gcp'},
-    {label: 'Azure', value: 'azure'},
-  ]}>
-  <TabItem value="aws">
+defaultValue="aws"
+values={[
+{label: 'Amazon Web Services', value: 'aws'},
+{label: 'Google Cloud', value: 'gcp'},
+{label: 'Azure', value: 'azure'},
+]}>
+<TabItem value="aws">
 
-The recommended context store for the Kaniko builder on AWS is Amazon S3. The following policy can be used to give the agent access to an S3 bucket:
+```yaml
+{
+  'Version': '2012-10-17',
+  'Statement':
+    [
+      {
+        'Effect': 'Allow',
+        'Action':
+          [
+            'ecr:CreateRepository',
+            'ecr:UploadLayerPart',
+            'ecr:PutImage',
+            'ecr:CompleteLayerUpload',
+            'ecr:InitiateLayerUpload',
+            'ecr:DescribeRepositories',
+            'ecr:DescribeImages',
+            'ecr:BatchCheckLayerAvailability',
+            'ecr:BatchDeleteImage',
+          ],
+        'Resource': 'arn:aws:ecr:<region>:<account-id>:repository/<repository>',
+      },
+      {
+        'Effect': 'Allow',
+        'Action': 'ecr:GetAuthorizationToken',
+        'Resource': '*',
+      },
+    ],
+}
+```
+
+</TabItem>
+<TabItem value="gcp">
+
+```js
+artifactregistry.dockerimages.list;
+artifactregistry.repositories.downloadArtifacts;
+artifactregistry.repositories.list;
+artifactregistry.repositories.uploadArtifacts;
+```
+
+</TabItem>
+<TabItem value="azure">
+
+Kaniko ビルダーを使用する場合は、[`AcrPush` role](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-roles?tabs=azure-cli#acrpush) を追加してください。
+
+</TabItem>
+</Tabs>
+
+### Kanikoのストレージ権限
+
+launch エージェントは、Kaniko ビルダーを使用している場合にクラウドストレージにプッシュする権限が必要です。Kaniko はビルドジョブを実行するポッドの外部にコンテキストストアを使用します。
+
+<Tabs
+defaultValue="aws"
+values={[
+{label: 'Amazon Web Services', value: 'aws'},
+{label: 'Google Cloud', value: 'gcp'},
+{label: 'Azure', value: 'azure'},
+]}>
+<TabItem value="aws">
+
+AWS で Kaniko ビルダーに推奨されるコンテキストストアは Amazon S3 です。以下のポリシーを使用してエージェントに S3 バケットへのアクセス権を付与できます。
 
 ```json
 {
@@ -244,83 +218,53 @@ The recommended context store for the Kaniko builder on AWS is Amazon S3. The fo
 }
 ```
 
-  </TabItem>
-  <TabItem value="gcp">
+</TabItem>
+<TabItem value="gcp">
 
-On GCP, the following IAM permissions are required for the agent to upload build contexts to GCS:
+GCP では、エージェントが GCS にビルドコンテキストをアップロードするために必要な IAM 権限は次の通りです。
 
 ```js
-storage.buckets.get
-storage.objects.create
-storage.objects.delete
-storage.objects.get
+storage.buckets.get;
+storage.objects.create;
+storage.objects.delete;
+storage.objects.get;
 ```
 
-  </TabItem>
-  <TabItem value="azure">
+</TabItem>
+<TabItem value="azure">
 
-The [Storage Blob Data Contributor](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) role is required in order for the agent to upload build contexts to Azure Blob Storage.
+エージェントが Azure Blob Storage にビルドコンテキストをアップロードするために、[Storage Blob Data Contributor](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) ロールが必要です。
 
-
-  </TabItem>
+</TabItem>
 </Tabs>
 
+## Kaniko ビルドのカスタマイズ
 
+エージェント設定の `builder.kaniko-config` キーに Kaniko ジョブが使用する Kubernetes Job スペックを指定します。例えば：
 
-### Permissions to execute jobs
-The agent needs permission in your AWS or GCP cloud to start jobs on Sagemaker or Vertex AI, respectively.
-
-<Tabs
-  defaultValue="aws"
-  values={[
-    {label: 'Amazon SageMaker', value: 'aws'},
-    {label: 'Vertex AI', value: 'vertex'},
-  ]}>
-  <TabItem value="aws">
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "sagemaker:CreateTrainingJob",
-      "Resource": "arn:aws:sagemaker:<REGION>:<ACCOUNT-ID>/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "iam:PassRole",
-      "Resource": "<ARN-OF-ROLE-TO-PASS>"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "kms:CreateGrant",
-      "Resource": "<ARN-OF-KMS-KEY>",
-      "Condition": {
-        "StringEquals": {
-          "kms:ViaService": "sagemaker.<REGION>.amazonaws.com",
-          "kms:GrantIsForAWSResource": "true"
-        }
-      }
-    }
-  ]
-}
+```yaml title="launch-config.yaml"
+builder:
+  type: kaniko
+  build-context-store: <my-build-context-store>
+  destination: <my-image-destination>
+  build-job-name: wandb-image-build
+  kaniko-config:
+    spec:
+      template:
+        spec:
+          containers:
+          - args:
+            - "--cache=false" # Args must be in the format "key=value"
+            env:
+            - name: "MY_ENV_VAR"
+              value: "my-env-var-value"
 ```
+
+## Launch エージェントを CoreWeave にデプロイする
+任意で W&B Launch エージェントを CoreWeave クラウドインフラにデプロイします。CoreWeave は GPU 加速ワークロードのために設計されたクラウドインフラです。
+
+Launch エージェントを CoreWeave にデプロイする方法については [CoreWeave documentation](https://docs.coreweave.com/partners/weights-and-biases#integration) を参照してください。
 
 :::note
-The `kms:CreateGrant` permission for SageMaker queues is required only if the associated ResourceConfig has a specified VolumeKmsKeyId and the associated role does not have a policy that permits this action.
+Launch エージェントを CoreWeave インフラにデプロイするためには [CoreWeave account](https://cloud.coreweave.com/login) を作成する必要があります。
 :::
-
-  </TabItem>
-  <TabItem value="vertex">
-
-In order to run jobs with vertex AI you will also need to set up a GCS bucket and grant the agent the permissions described above.
-
-```js
-ml.jobs.create
-ml.jobs.list
-ml.jobs.get
-```
-
-  </TabItem>
-</Tabs>

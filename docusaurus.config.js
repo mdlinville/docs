@@ -6,7 +6,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Weights & Biases 선적 서류 비치',
+  title: 'Weights & Biases ドキュメンテーション',
   staticDirectories: ['static'],
   tagline: 'The developer-first MLOps platform',
   url: 'https://docs.wandb.ai/',

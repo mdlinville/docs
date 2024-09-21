@@ -106,8 +106,6 @@ init_kwargs={
 
 wandb.initの全ての引数については、[こちら](https://docs.wandb.ai/ref/python/init)をご覧ください。
 
-![](@site/static/images/integrations/log_metrics.gif)
-
 ### :checkered\_flag: チェックポイント
 
 `MMDetWandbHook`の`log_checkpoint=True`引数を使って、これらのチェックポイントを[W&B Artifacts](../artifacts/intro.md)として確実に保存できます。この機能は、MMCVの[`CheckpointHook`](https://mmcv.readthedocs.io/en/latest/api.html?highlight=CheckpointHook#mmcv.runner.CheckpointHook)に依存しており、チェックポイントのモデルを定期的に保存します。期間は`checkpoint_config.interval`で決定されます。

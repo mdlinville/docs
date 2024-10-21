@@ -1,5 +1,5 @@
 ---
-title: "Does the W&B client support Python 2? <a href="#eol-python27" id="eol-python27"></a>"
+title: "Does the W&B client support Python 2?"
 tags:
    - 
 ---

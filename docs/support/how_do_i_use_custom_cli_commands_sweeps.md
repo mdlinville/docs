@@ -1,9 +1,9 @@
 ---
 title: "How do I use custom CLI commands with sweeps?"
-tags: []
+tags:
+   - sweeps
 ---
 
-### How do I use custom CLI commands with sweeps?
 You can use W&B Sweeps with custom CLI commands if you normally configure some aspects of training by passing command line arguments.
 
 For example, the proceeding code snippet demonstrates a bash terminal where the user is training a Python script named train.py. The user passes in values that are then parsed within the Python script:

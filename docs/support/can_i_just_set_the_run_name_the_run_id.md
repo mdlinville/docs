@@ -1,9 +1,9 @@
 ---
 title: "Can I just set the run name to the run ID?"
-tags: []
+tags:
+   - experiments
 ---
 
-### Can I just set the run name to the run ID?
 If you'd like to overwrite the run name (like snowy-owl-10) with the run ID (like qvlp96vk) you can use this snippet:
 
 ```python

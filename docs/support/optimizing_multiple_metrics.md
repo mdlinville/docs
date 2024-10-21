@@ -1,9 +1,9 @@
 ---
 title: "Optimizing multiple metrics"
-tags: []
+tags:
+   - sweeps
 ---
 
-### Optimizing multiple metrics
 If you want to optimize multiple metrics in the same run, you can use a weighted sum of the individual metrics.
 
 ```python

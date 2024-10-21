@@ -1,9 +1,9 @@
 ---
 title: "`LaunchError: Permission denied`"
-tags: []
+tags:
+   - experiments
 ---
 
-### `LaunchError: Permission denied`
 If you're getting the error message `Launch Error: Permission denied`, you don't have permissions to log to the project you're trying to send runs to. This might be for a few different reasons.
 
 1. You aren't logged in on this machine. Run [`wandb login`](../../ref/cli/wandb-login.md) on the command line.

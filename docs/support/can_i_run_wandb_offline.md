@@ -1,9 +1,9 @@
 ---
 title: "Can I run wandb offline?"
-tags: []
+tags:
+   - 
 ---
 
-### Can I run wandb offline?
 If you're training on an offline machine and want to upload your results to our servers afterwards, we have a feature for you!
 
 1. Set the environment variable `WANDB_MODE=offline` to save the metrics locally, no internet required.

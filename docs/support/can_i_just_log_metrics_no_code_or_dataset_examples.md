@@ -1,9 +1,9 @@
 ---
 title: "Can I just log metrics, no code or dataset examples?"
-tags: []
+tags:
+   - 
 ---
 
-### Can I just log metrics, no code or dataset examples?
 **Dataset Examples**
 
 By default, we don't log any of your dataset examples. You can explicitly turn this feature on to see example predictions in our web interface.

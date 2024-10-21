@@ -1,9 +1,9 @@
 ---
 title: "How do I programmatically access the human-readable run name?"
-tags: []
+tags:
+   - experiments
 ---
 
-### How do I programmatically access the human-readable run name?
 It's available as the `.name` attribute of a [`wandb.Run`](../../ref/python/run.md).
 
 ```python

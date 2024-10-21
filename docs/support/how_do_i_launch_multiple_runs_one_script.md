@@ -1,9 +1,9 @@
 ---
 title: "How do I launch multiple runs from one script?"
-tags: []
+tags:
+   - experiments
 ---
 
-### How do I launch multiple runs from one script?
 Use `wandb.init` and `run.finish()` to log multiple Runs from one script:
 
 1. `run = wandb.init(reinit=True)`: Use this setting to allow reinitializing runs

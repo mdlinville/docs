@@ -1,9 +1,9 @@
 ---
 title: "How is W&B different from TensorBoard?"
-tags: []
+tags:
+   - 
 ---
 
-### How is W&B different from TensorBoard?
 We love the TensorBoard folks, and we have a [TensorBoard integration](../integrations/tensorboard.md)! We were inspired to improve experiment tracking tools for everyone. When the co-founders started working on W&B, they were inspired to build a tool for the frustrated TensorBoard users at OpenAI. Here are a few things we focused on improving:
 
 1. **Reproduce models**: W&B is good for experimentation, exploration, and reproducing models later. We capture not just the metrics, but also the hyperparameters and version of the code, and we can save your model checkpoints for you so your project is reproducible.

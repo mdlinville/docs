@@ -1,9 +1,16 @@
 ---
 title: "How can I log additional metrics after a run completes?"
+<<<<<<< HEAD
 tags:
    - 
 ---
 
+=======
+tags: []
+---
+
+### How can I log additional metrics after a run completes?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 There are several ways to do this.
 
 For complicated workflows, we recommend using multiple runs and setting group parameters in [`wandb.init`](../track/launch.md) to a unique value in all the processes that are run as part of a single experiment. The [runs table](../app/pages/run-page.md) will automatically group the table by the group ID and the visualizations will behave as expected. This will allow you to run multiple experiments and training runs as separate processes log all the results into a single place.

@@ -1,9 +1,16 @@
 ---
 title: "How can I change the directory my sweep logs to locally?"
+<<<<<<< HEAD
 tags:
    - sweeps
 ---
 
+=======
+tags: []
+---
+
+### How can I change the directory my sweep logs to locally?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 You can change the path of the directory where W&B will log your run data by setting an environment variable `WANDB_DIR`. For example:
 
 ```python

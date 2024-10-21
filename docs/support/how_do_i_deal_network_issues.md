@@ -1,9 +1,16 @@
 ---
 title: "How do I deal with network issues?"
+<<<<<<< HEAD
 tags:
    - 
 ---
 
+=======
+tags: []
+---
+
+### How do I deal with network issues?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 If you're seeing SSL or network errors:`wandb: Network error (ConnectionError), entering retry loop`. You can try a couple of different approaches to solving this issue:
 
 1. Upgrade your SSL certificate. If you're running the script on an Ubuntu server, run `update-ca-certificates` We can't sync training logs without a valid SSL certificate because it's a security vulnerability.

@@ -1,9 +1,16 @@
 ---
 title: "What is the difference between `.log()` and `.summary`?"
+<<<<<<< HEAD
 tags:
    - 
 ---
 
+=======
+tags: []
+---
+
+### What is the difference between `.log()` and `.summary`?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 The summary is the value that shows in the table while the log will save all the values for plotting later.
 
 For example, you might want to call `wandb.log` every time the accuracy changes. Usually, you can just use .log. `wandb.log()` will also update the summary value by default unless you have set the summary manually for that metric

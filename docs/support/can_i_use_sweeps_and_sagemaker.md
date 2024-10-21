@@ -1,9 +1,16 @@
 ---
 title: "Can I use Sweeps and SageMaker?"
+<<<<<<< HEAD
 tags:
    - sweeps
 ---
 
+=======
+tags: []
+---
+
+### Can I use Sweeps and SageMaker?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 Yes. At a glance, you will need to need to authenticate W&B and you will need to create a `requirements.txt` file if you use a built-in SageMaker estimator. For more on how to authenticate and set up a requirements.txt file, see the [SageMaker integration](../integrations/other/sagemaker.md) guide.
 
 :::info

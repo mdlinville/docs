@@ -1,9 +1,16 @@
 ---
 title: "What is the difference between wandb.init modes?"
+<<<<<<< HEAD
 tags:
    - experiments
 ---
 
+=======
+tags: []
+---
+
+### What is the difference between wandb.init modes?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 Modes can be "online", "offline" or "disabled", and default to online.
 
 `online`(default): In this mode, the client sends data to the wandb server.

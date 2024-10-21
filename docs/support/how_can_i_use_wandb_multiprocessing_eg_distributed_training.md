@@ -1,9 +1,16 @@
 ---
 title: "How can I use wandb with multiprocessing, e.g. distributed training?"
+<<<<<<< HEAD
 tags:
    - experiments
 ---
 
+=======
+tags: []
+---
+
+### How can I use wandb with multiprocessing, e.g. distributed training? 
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 If your training program uses multiple processes you will need to structure your program to avoid making wandb method calls from processes where you did not run `wandb.init()`.\
 \
 There are several approaches to managing multiprocess training:

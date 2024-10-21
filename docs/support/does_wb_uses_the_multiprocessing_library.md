@@ -1,9 +1,16 @@
 ---
 title: "Does W&B uses the `multiprocessing` library?"
+<<<<<<< HEAD
 tags:
    - experiments
 ---
 
+=======
+tags: []
+---
+
+### Does W&B uses the `multiprocessing` library?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 Yes, W&B uses the `multiprocessing` library. If you see an error message such as:
 
 ```

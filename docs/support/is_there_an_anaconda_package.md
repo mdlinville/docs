@@ -1,9 +1,16 @@
 ---
 title: "Is there an anaconda package?"
+<<<<<<< HEAD
 tags:
    - 
 ---
 
+=======
+tags: []
+---
+
+### Is there an anaconda package?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 Yes! You can either install with `pip` or with `conda`. For the latter, you'll need to get the package from the [conda-forge](https://conda-forge.org) channel.
 
 <Tabs

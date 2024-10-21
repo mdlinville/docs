@@ -1,9 +1,16 @@
 ---
 title: "Is there a dark mode?"
+<<<<<<< HEAD
 tags:
    - 
 ---
 
+=======
+tags: []
+---
+
+### Is there a dark mode?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 Yes. To enable dark mode:
 
 1. Navigate to your account settings at [https://wandb.ai/settings](https://wandb.ai/settings).

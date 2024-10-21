@@ -1,9 +1,16 @@
 ---
 title: "What is the "Est. Runs" column?"
+<<<<<<< HEAD
 tags:
    - sweeps
 ---
 
+=======
+tags: []
+---
+
+### What is the "Est. Runs" column?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 W&B provides an estimated number of Runs that will occur when you create a W&B Sweep with a discrete search space. The total number of Runs is the cartesian product of the search space.
 
 For example, suppose you provide the following search space:

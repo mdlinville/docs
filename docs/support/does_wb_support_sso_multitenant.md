@@ -1,9 +1,16 @@
 ---
 title: "Does W&B support SSO for Multi-tenant?"
+<<<<<<< HEAD
 tags:
    - 
 ---
 
+=======
+tags: []
+---
+
+### Does W&B support SSO for Multi-tenant?
+>>>>>>> 6ef6c45f4d73f19772f9c0cbb4fbccb2cee243c2
 Yes, W&B supports setting up Single Sign-On (SSO) for the Multi-tenant offering via Auth0. W&B support SSO integration with any OIDC compliant identity provider(ex: Okta, AzureAD etc.). If you have an OIDC provider, please follow the steps below:
 
 * Create a `Single Page Application (SPA)` on your Identity Provider.

@@ -282,7 +282,7 @@ jobs:
               }
               
               const previewBase = (process.env.PREVIEW_BASE || '').replace(/\/$/, '');
-              const previewBase = 'https://docs-1688-docs-1512.docodile.pages.dev';
+                const previewBase = 'https://docs-1688-docs-1512.docodile.pages.dev';
               const body = header + '\n\nNo documentation content changes in this PR.';
               
               await github.rest.issues.updateComment({

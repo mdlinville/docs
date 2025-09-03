@@ -180,7 +180,8 @@ jobs:
             if (!anyEligible) {
               core.info('No relevant content changes. Updating comment to reflect this.');
               
-              const previewBase = (process.env.PREVIEW_BASE || '').replace(/\/$/, '');
+              // TEMPORARY: Override for testing in fork
+              const previewBase = 'https://YOUR-PREVIEW-URL.docodile.pages.dev';
               const header = '<!-- docs-preview-links -->\n<!-- preview-base: ' + previewBase + ' -->\n**PR Preview: Changed content**';
               const body = header + '\n\nNo documentation content changes in this PR.';
               
@@ -278,8 +279,9 @@ jobs:
             }
 
 
-            const previewBase = (process.env.PREVIEW_BASE || '').replace(/\/$/, '');
-            core.info(`Using Branch Preview URL: ${previewBase}`);
+            // TEMPORARY: Override for testing in fork
+            const previewBase = 'https://YOUR-PREVIEW-URL.docodile.pages.dev';
+            core.info(`Using hardcoded Branch Preview URL for testing: ${previewBase}`);
 
             function mapEntry(filePath) {
               const norm = filePath.replace(/\\/g, '/');

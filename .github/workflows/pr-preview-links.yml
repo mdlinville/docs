@@ -217,9 +217,11 @@ jobs:
               core.warning('Branch Preview URL not found within 2 minutes. Links will be added when Cloudflare comment triggers update workflow.');
               return '';
             }
-            let base = await waitForCloudflareBranchUrl();
-            if (!base) base = await fromOurExistingComment();
-            core.info(`Branch Preview URL found: ${base || '(not yet)'}`);
+            // TEMPORARY: Override preview URL for testing in fork
+            let base = 'https://YOUR-PREVIEW-URL.docodile.pages.dev';
+            // let base = await waitForCloudflareBranchUrl();
+            // if (!base) base = await fromOurExistingComment();
+            core.info(`Branch Preview URL hardcoded for testing: ${base}`);
             core.setOutput('base', base);
 
       - name: Update PR comment with preview links
@@ -281,7 +283,8 @@ jobs:
                 return;
               }
               
-              const previewBase = (process.env.PREVIEW_BASE || '').replace(/\/$/, '');
+              // TEMPORARY: Override for testing in fork
+              const previewBase = 'https://YOUR-PREVIEW-URL.docodile.pages.dev';
               const header = '<!-- docs-preview-links -->\n<!-- preview-base: ' + (previewBase || '') + ' -->\n**PR Preview: Changed content**';
               const body = header + '\n\nNo documentation content changes in this PR.';
               
@@ -388,7 +391,8 @@ jobs:
             }
 
             // Use Branch Preview URL extracted from Cloudflare comment
-            const previewBase = (process.env.PREVIEW_BASE || '').replace(/\/$/, '');
+            // TEMPORARY: Override for testing in fork
+            const previewBase = 'https://YOUR-PREVIEW-URL.docodile.pages.dev';
             if (!previewBase) {
               core.warning('No Branch Preview URL found yet; leaving links unlinked rather than using commit URL.');
             }

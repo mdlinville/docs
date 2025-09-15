@@ -49,7 +49,7 @@ jobs:
 
       - name: Get changed files
         id: changed
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         with:
           files: |
             content/**
@@ -220,6 +220,15 @@ jobs:
             }
             let base = await waitForCloudflareBranchUrl();
             if (!base) base = await fromOurExistingComment();
+            
+            // TEMPORARY OVERRIDE FOR FORK TESTING
+            // Since Cloudflare won't run on forks, use a hardcoded URL
+            if (!base && context.repo.owner === 'mdlinville') {
+              // Use main branch preview URL as a fallback for testing
+              base = 'https://main.docodile.pages.dev';
+              core.warning('Using temporary override URL for fork testing: ' + base);
+            }
+            
             core.info(`Branch Preview URL found: ${base || '(not yet)'}`);
             core.setOutput('base', base);
 

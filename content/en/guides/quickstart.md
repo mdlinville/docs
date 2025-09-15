@@ -1,5 +1,5 @@
 ---
-description: W&B Quickstart - Test change for Dependabot PR #1647 verification
+description: W&B Quickstart
 menu:
   default:
     identifier: quickstart_models

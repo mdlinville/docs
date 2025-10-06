@@ -4,10 +4,10 @@ This workflow automates the generation of W&B SDK release notes from the `wandb/
 
 ## Features
 
-- 🚀 Generates release notes for a specific SDK version
-- 📝 Creates a new branch with the generated markdown file
-- 🔄 Opens a draft PR for review
-- 💬 Can be triggered via PR comments for testing
+- Generates release notes for a specific SDK version by getting correct release from wandb/wandb with some light post-processing
+- Creates a new branch with the generated markdown file
+- Opens a draft PR for review
+- Can be triggered via PR comments for testing
 
 ## Usage
 

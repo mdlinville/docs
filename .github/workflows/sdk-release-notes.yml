@@ -83,18 +83,36 @@ jobs:
       - name: Generate release notes
         id: generate
         run: |
+          set -e  # Exit on any error
           VERSION="${{ steps.get-version.outputs.version }}"
           OUTPUT_FILE="content/en/ref/release-notes/sdk/${VERSION}.md"
+          
+          echo "📦 Version to generate: $VERSION"
+          echo "📄 Output file will be: $OUTPUT_FILE"
+          
+          # Check if the changelog exists
+          if [ ! -f "wandb-sdk/CHANGELOG.md" ]; then
+            echo "❌ Error: CHANGELOG.md not found at wandb-sdk/CHANGELOG.md"
+            ls -la wandb-sdk/ || echo "wandb-sdk directory not found"
+            exit 1
+          fi
+          
+          echo "✅ Found CHANGELOG.md"
           
           # Run the script
           python scripts/sdk-changelog-to-hugo.py \
             --changelog wandb-sdk/CHANGELOG.md \
             --output content/en/ref/release-notes/sdk \
-            --version "$VERSION"
+            --version "$VERSION" || {
+              echo "❌ Python script failed with exit code $?"
+              exit 1
+            }
           
           # Check if file was created
           if [ ! -f "$OUTPUT_FILE" ]; then
-            echo "❌ Error: Release notes file was not created"
+            echo "❌ Error: Release notes file was not created at $OUTPUT_FILE"
+            echo "📁 Contents of output directory:"
+            ls -la content/en/ref/release-notes/sdk/ || echo "Directory not found"
             exit 1
           fi
           

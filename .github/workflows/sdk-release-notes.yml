@@ -80,6 +80,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install emoji
           
+      - name: Debug - Check directory structure
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of current directory:"
+          ls -la
+          echo "Contents of scripts directory:"
+          ls -la scripts/ || echo "scripts directory not found"
+          echo "Python script location check:"
+          find . -name "sdk-changelog-to-hugo.py" -type f 2>/dev/null || echo "Script not found"
+          
       - name: Generate release notes
         id: generate
         run: |
@@ -100,7 +110,7 @@ jobs:
           echo "✅ Found CHANGELOG.md"
           
           # Run the script
-          python scripts/sdk-changelog-to-hugo.py \
+          python3 ./scripts/sdk-changelog-to-hugo.py \
             --changelog wandb-sdk/CHANGELOG.md \
             --output content/en/ref/release-notes/sdk \
             --version "$VERSION" || {

@@ -465,8 +465,13 @@
 /ref/python/sdk/* /ref/python/:splat 301
 /ref/python/sdk/classes/* /ref/python/experiments/:splat 301
 /ref/python/wandb_workspaces/* /ref/wandb_workspaces/:splat 301
-/ref/release-notes/0.3* /ref/release-notes/archived/0.3:splat 301
-/ref/release-notes/0.4* /ref/release-notes/archived/0.4:splat 301
-/ref/release-notes/0.5*/ /ref/release-notes/releases/archived/0.56:splat 301
-/ref/release-notes/releases/* /ref/releases/:splat 301
-/ref/release-notes/releases/archived/* /ref/releases/archived/:splat 301
+# Server release notes redirects (legacy paths to new server subdirectory)
+# More specific rules must come before general rules
+/ref/release-notes/releases/archived/* /ref/release-notes/server/archived/:splat 301
+/ref/release-notes/releases/* /ref/release-notes/server/:splat 301
+/ref/release-notes/archived/* /ref/release-notes/server/archived/:splat 301
+/ref/release-notes/0.3* /ref/release-notes/server/archived/0.3:splat 301
+/ref/release-notes/0.4* /ref/release-notes/server/archived/0.4:splat 301
+/ref/release-notes/0.5* /ref/release-notes/server/archived/0.5:splat 301
+/ref/release-notes/0.6* /ref/release-notes/server/0.6:splat 301
+/ref/release-notes/0.7* /ref/release-notes/server/0.7:splat 301

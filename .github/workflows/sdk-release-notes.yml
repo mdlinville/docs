@@ -61,14 +61,12 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Checkout wandb/wandb repo for CHANGELOG
-        uses: actions/checkout@v4
-        with:
-          repository: wandb/wandb
-          path: wandb-sdk
-          sparse-checkout: |
-            CHANGELOG.md
-          sparse-checkout-cone-mode: false
+      - name: Fetch CHANGELOG.md from wandb/wandb
+        run: |
+          echo "📥 Fetching CHANGELOG.md from wandb/wandb repository..."
+          curl -L -o CHANGELOG.md https://raw.githubusercontent.com/wandb/wandb/main/CHANGELOG.md
+          echo "✅ Downloaded CHANGELOG.md"
+          echo "📊 File size: $(wc -c < CHANGELOG.md) bytes"
           
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -83,12 +81,9 @@ jobs:
       - name: Debug - Check directory structure
         run: |
           echo "Current directory: $(pwd)"
-          echo "Contents of current directory:"
-          ls -la
           echo "Contents of scripts directory:"
-          ls -la scripts/ || echo "scripts directory not found"
-          echo "Python script location check:"
-          find . -name "sdk-changelog-to-hugo.py" -type f 2>/dev/null || echo "Script not found"
+          ls -la scripts/
+          echo "✅ Ready to generate release notes"
           
       - name: Generate release notes
         id: generate
@@ -101,9 +96,9 @@ jobs:
           echo "📄 Output file will be: $OUTPUT_FILE"
           
           # Check if the changelog exists
-          if [ ! -f "wandb-sdk/CHANGELOG.md" ]; then
-            echo "❌ Error: CHANGELOG.md not found at wandb-sdk/CHANGELOG.md"
-            ls -la wandb-sdk/ || echo "wandb-sdk directory not found"
+          if [ ! -f "CHANGELOG.md" ]; then
+            echo "❌ Error: CHANGELOG.md not found in current directory"
+            ls -la
             exit 1
           fi
           
@@ -111,7 +106,7 @@ jobs:
           
           # Run the script
           python3 ./scripts/sdk-changelog-to-hugo.py \
-            --changelog wandb-sdk/CHANGELOG.md \
+            --changelog CHANGELOG.md \
             --output content/en/ref/release-notes/sdk \
             --version "$VERSION" || {
               echo "❌ Python script failed with exit code $?"

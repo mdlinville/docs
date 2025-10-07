@@ -366,6 +366,10 @@ description: "Unknown base release date"
                 # Append to existing Patches section
                 existing_content = existing_content.rstrip() + '\n\n' + format_patch_content(release)
             
+            # Ensure content ends with a newline
+            if not existing_content.endswith('\n'):
+                existing_content += '\n'
+            
             # Write updated content
             with open(filepath, 'w') as f:
                 f.write(existing_content)
@@ -384,7 +388,8 @@ description: "{release['description']}"
 
 {alert_text}
 
-{transformed_content}"""
+{transformed_content}
+"""
         
         # Write file
         with open(filepath, 'w') as f:

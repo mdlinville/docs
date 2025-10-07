@@ -60,6 +60,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # Fetch all history for proper branch operations
           
       - name: Fetch CHANGELOG.md from wandb/wandb
         run: |
@@ -137,7 +138,7 @@ jobs:
           OUTPUT_FILE="${{ steps.generate.outputs.output_file }}"
           
           echo "📝 Creating branch: $BRANCH_NAME"
-          echo "📄 Adding file: $OUTPUT_FILE"
+          echo "📄 Will commit file: $OUTPUT_FILE"
           
           # Configure git
           git config --global user.name 'github-actions[bot]'
@@ -152,13 +153,11 @@ jobs:
           
           echo "✅ File exists, proceeding with git operations"
           
-          # IMPORTANT: Add the file BEFORE creating the branch
-          # This ensures the file is staged and will move with us to the new branch
-          echo "➕ Adding file to git (before branch creation)..."
-          git add "$OUTPUT_FILE"
-          
-          echo "📋 Git status after add:"
-          git status
+          # Ensure we're on main and it's clean
+          echo "🔄 Ensuring clean main branch..."
+          git checkout main
+          git reset --hard origin/main
+          git clean -fd
           
           # Delete the remote branch if it exists (from previous runs)
           echo "🔍 Checking for existing remote branch..."
@@ -169,11 +168,15 @@ jobs:
             echo "✅ No existing remote branch found"
           fi
           
-          # Create and checkout new branch (staged changes will come with us)
-          echo "🌿 Creating new branch..."
+          # Create and checkout new branch from clean main
+          echo "🌿 Creating new branch from main..."
           git checkout -b "$BRANCH_NAME"
           
-          echo "📋 Git status on new branch:"
+          # Now add and commit the file on the new branch
+          echo "➕ Adding file to git..."
+          git add "$OUTPUT_FILE"
+          
+          echo "📋 Git status:"
           git status
           
           echo "💾 Committing changes..."

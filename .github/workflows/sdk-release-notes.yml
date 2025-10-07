@@ -240,13 +240,13 @@ jobs:
 
               return existingPR.number;
             }
-
+            
             // Create new PR if none exists
             console.log('📝 Creating new PR...');
             const minorVersion = version.split('.').slice(0, 2).join('.');
             const isPatch = !version.endsWith('.0');
             const action = isPatch ? 'Update' : 'Add';
-
+            
             const { data: pr } = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -255,28 +255,28 @@ jobs:
               base: 'main',
               draft: true,
               body: `## SDK Release Notes for v${version}
-
+            
             This PR ${isPatch ? 'updates' : 'adds'} release notes for W&B SDK v${version}.
-
+            
             ### Generated from
             - Source: [wandb/wandb CHANGELOG.md](https://github.com/wandb/wandb/blob/main/CHANGELOG.md)
             - Version: v${version}
             - File: \`${minorVersion}.md\` (combined minor version format)
-
+            
             ### Checklist
             - [ ] Review content for accuracy
             - [ ] Verify formatting looks correct
             - [ ] Check that all links work
             - [ ] Confirm no internal/private information is exposed
             ${isPatch ? '- [ ] Verify patch was correctly appended to Patches section' : '- [ ] Verify this is a new minor version file'}
-
+            
             ### Preview
             View the generated file: [\`content/en/ref/release-notes/sdk/${minorVersion}.md\`](https://github.com/${{ github.repository }}/blob/${branch}/content/en/ref/release-notes/sdk/${minorVersion}.md)
-
+            
             ---
             *Generated automatically by the SDK Release Notes workflow*`
             });
-
+            
             console.log(`✅ Created PR #${pr.number}: ${pr.html_url}`);
             return pr.number;
 

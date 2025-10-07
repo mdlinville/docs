@@ -183,15 +183,13 @@ jobs:
           fi
           
           echo "💾 Committing changes..."
-          git commit -m "Add SDK release notes for v${VERSION}
-
-Generated automatically from wandb/wandb CHANGELOG.md"
+          git commit -m "Add SDK release notes for v${VERSION} - Generated automatically from wandb/wandb CHANGELOG.md"
           
           echo "🚀 Pushing to remote..."
           git push origin "$BRANCH_NAME"
           
           echo "✅ Successfully pushed changes"
-          
+
       - name: Create or update Pull Request
         id: create-pr
         uses: actions/github-script@v7

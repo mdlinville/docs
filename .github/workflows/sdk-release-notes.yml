@@ -67,8 +67,10 @@ jobs:
         run: |
           set -e
           VERSION="${{ steps.get-version.outputs.version }}"
+          # Extract minor version (e.g., 0.21 from 0.21.1)
+          MINOR_VERSION=$(echo "$VERSION" | cut -d. -f1-2)
           BRANCH_NAME="sdk-release-notes-v${VERSION}"
-          OUTPUT_FILE="content/en/ref/release-notes/sdk/${VERSION}.md"
+          OUTPUT_FILE="content/en/ref/release-notes/sdk/${MINOR_VERSION}.md"
           
           # Configure git
           git config --global user.name 'github-actions[bot]'
@@ -85,19 +87,22 @@ jobs:
             git checkout -b "$BRANCH_NAME" origin/main
           fi
           
-          echo "📄 Checking if release notes already exist for v$VERSION..."
+          # Check if this exact version has already been added
           if [ -f "$OUTPUT_FILE" ]; then
-            echo "⚠️ Release notes already exist for v$VERSION at $OUTPUT_FILE"
-            echo "📝 Content preview:"
-            head -n 20 "$OUTPUT_FILE"
-            echo ""
-            echo "❌ Exiting - release notes already generated for this version"
-            exit 1
+            echo "📄 Checking if v$VERSION is already in $OUTPUT_FILE..."
+            if grep -q "### v${VERSION}" "$OUTPUT_FILE" 2>/dev/null || grep -q "^## \[${VERSION}\]" "$OUTPUT_FILE" 2>/dev/null; then
+              echo "⚠️ Release notes for v$VERSION already exist in $OUTPUT_FILE"
+              echo "❌ Exiting - this version has already been added"
+              exit 1
+            fi
+            echo "✅ Version $VERSION not found in existing file, will append as patch"
+          else
+            echo "✅ No existing file for minor version $MINOR_VERSION"
           fi
           
-          echo "✅ No existing release notes found for v$VERSION"
           echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
           echo "output_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
+          echo "minor_version=$MINOR_VERSION" >> $GITHUB_OUTPUT
           
       - name: Fetch and validate CHANGELOG
         id: fetch-changelog
@@ -135,12 +140,21 @@ jobs:
           set -e
           VERSION="${{ steps.get-version.outputs.version }}"
           OUTPUT_FILE="${{ steps.setup-branch.outputs.output_file }}"
+          MINOR_VERSION="${{ steps.setup-branch.outputs.minor_version }}"
           
           echo "📦 Generating release notes for v$VERSION"
-          echo "📄 Output file: $OUTPUT_FILE"
+          echo "📄 Output file: $OUTPUT_FILE (minor version: $MINOR_VERSION)"
+          
+          # Copy the combined script if it doesn't exist
+          if [ ! -f ./scripts/sdk-changelog-to-hugo-combined.py ]; then
+            echo "⚠️ Combined script not found, using original script..."
+            SCRIPT_NAME="sdk-changelog-to-hugo.py"
+          else
+            SCRIPT_NAME="sdk-changelog-to-hugo-combined.py"
+          fi
           
           # Run the script
-          python3 ./scripts/sdk-changelog-to-hugo.py \
+          python3 ./scripts/$SCRIPT_NAME \
             --changelog CHANGELOG.md \
             --output content/en/ref/release-notes/sdk \
             --version "$VERSION" || {
@@ -148,14 +162,14 @@ jobs:
               exit 1
             }
           
-          # Verify file was created
+          # Verify file was created or updated
           if [ ! -f "$OUTPUT_FILE" ]; then
             echo "❌ Error: Release notes file was not created at $OUTPUT_FILE"
             ls -la content/en/ref/release-notes/sdk/
             exit 1
           fi
           
-          echo "✅ Successfully generated release notes"
+          echo "✅ Successfully generated/updated release notes"
           
           # Clean up the downloaded CHANGELOG.md
           rm -f CHANGELOG.md
@@ -183,7 +197,13 @@ jobs:
           fi
           
           echo "💾 Committing changes..."
-          git commit -m "Add SDK release notes for v${VERSION} - Generated automatically from wandb/wandb CHANGELOG.md"
+          # Determine if this is a patch or new minor version
+          if echo "$VERSION" | grep -q '\.0$'; then
+            COMMIT_MSG="Add SDK release notes for v${VERSION} (new minor version)"
+          else
+            COMMIT_MSG="Update SDK release notes: add v${VERSION} patch"
+          fi
+          git commit -m "$COMMIT_MSG - Generated automatically from wandb/wandb CHANGELOG.md"
           
           echo "🚀 Pushing to remote..."
           git push origin "$BRANCH_NAME"
@@ -221,35 +241,41 @@ jobs:
               return existingPR.number;
             }
             
-            // Create new PR if none exists
-            console.log('📝 Creating new PR...');
-            const { data: pr } = await github.rest.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `[SDK Release Notes] Add v${version}`,
-              head: branch,
-              base: 'main',
-              draft: true,
-              body: `## SDK Release Notes for v${version}
-            
-            This PR adds release notes for W&B SDK v${version}.
-            
-            ### Generated from
-            - Source: [wandb/wandb CHANGELOG.md](https://github.com/wandb/wandb/blob/main/CHANGELOG.md)
-            - Version: v${version}
-            
-            ### Checklist
-            - [ ] Review content for accuracy
-            - [ ] Verify formatting looks correct
-            - [ ] Check that all links work
-            - [ ] Confirm no internal/private information is exposed
-            
-            ### Preview
-            View the generated file: [\`content/en/ref/release-notes/sdk/${version}.md\`](https://github.com/${{ github.repository }}/blob/${branch}/content/en/ref/release-notes/sdk/${version}.md)
-            
-            ---
-            *Generated automatically by the SDK Release Notes workflow*`
-            });
+        // Create new PR if none exists
+        console.log('📝 Creating new PR...');
+        const minorVersion = version.split('.').slice(0, 2).join('.');
+        const isPatch = !version.endsWith('.0');
+        const action = isPatch ? 'Update' : 'Add';
+        
+        const { data: pr } = await github.rest.pulls.create({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          title: `[SDK Release Notes] ${action} v${version}`,
+          head: branch,
+          base: 'main',
+          draft: true,
+          body: `## SDK Release Notes for v${version}
+        
+        This PR ${isPatch ? 'updates' : 'adds'} release notes for W&B SDK v${version}.
+        
+        ### Generated from
+        - Source: [wandb/wandb CHANGELOG.md](https://github.com/wandb/wandb/blob/main/CHANGELOG.md)
+        - Version: v${version}
+        - File: \`${minorVersion}.md\` (combined minor version format)
+        
+        ### Checklist
+        - [ ] Review content for accuracy
+        - [ ] Verify formatting looks correct
+        - [ ] Check that all links work
+        - [ ] Confirm no internal/private information is exposed
+        ${isPatch ? '- [ ] Verify patch was correctly appended to Patches section' : '- [ ] Verify this is a new minor version file'}
+        
+        ### Preview
+        View the generated file: [\`content/en/ref/release-notes/sdk/${minorVersion}.md\`](https://github.com/${{ github.repository }}/blob/${branch}/content/en/ref/release-notes/sdk/${minorVersion}.md)
+        
+        ---
+        *Generated automatically by the SDK Release Notes workflow*`
+        });
             
             console.log(`✅ Created PR #${pr.number}: ${pr.html_url}`);
             return pr.number;

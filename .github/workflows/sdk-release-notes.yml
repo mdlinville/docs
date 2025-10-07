@@ -153,6 +153,14 @@ jobs:
           
           echo "✅ File exists, proceeding with git operations"
           
+          # IMPORTANT: Add the file BEFORE creating the branch
+          # This ensures the file is staged and will move with us to the new branch
+          echo "➕ Adding file to git (before branch creation)..."
+          git add "$OUTPUT_FILE"
+          
+          echo "📋 Git status after add:"
+          git status
+          
           # Delete the remote branch if it exists (from previous runs)
           echo "🔍 Checking for existing remote branch..."
           if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
@@ -162,15 +170,11 @@ jobs:
             echo "✅ No existing remote branch found"
           fi
           
-          # Create and checkout new branch
+          # Create and checkout new branch (staged changes will come with us)
           echo "🌿 Creating new branch..."
           git checkout -b "$BRANCH_NAME"
           
-          # Add and commit the new file
-          echo "➕ Adding file to git..."
-          git add "$OUTPUT_FILE"
-          
-          echo "📋 Git status:"
+          echo "📋 Git status on new branch:"
           git status
           
           echo "💾 Committing changes..."

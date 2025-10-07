@@ -222,8 +222,26 @@ def transform_content(content):
             else:
                 # Keep the line as-is if it doesn't match our pattern
                 transformed_lines.append(line)
+        elif line.startswith('#'):
+            # Adjust heading levels - reduce by one level (### becomes ##, ## becomes #)
+            # But don't go below H2 for the content (H1 is reserved for page title)
+            if line.startswith('### '):
+                # H3 becomes H2
+                transformed_lines.append(line.replace('### ', '## ', 1))
+            elif line.startswith('#### '):
+                # H4 becomes H3
+                transformed_lines.append(line.replace('#### ', '### ', 1))
+            elif line.startswith('##### '):
+                # H5 becomes H4
+                transformed_lines.append(line.replace('##### ', '#### ', 1))
+            elif line.startswith('###### '):
+                # H6 becomes H5
+                transformed_lines.append(line.replace('###### ', '##### ', 1))
+            else:
+                # Keep H1 and H2 as-is (though changelog shouldn't have H1)
+                transformed_lines.append(line)
         else:
-            # Keep non-list lines as-is (but with emojis removed)
+            # Keep other lines as-is (but with emojis removed)
             transformed_lines.append(line)
     
     # Join lines and clean up trailing whitespace

@@ -124,6 +124,10 @@ jobs:
           echo "output_file=$OUTPUT_FILE" >> $GITHUB_OUTPUT
           echo "✅ Generated release notes for v$VERSION"
           
+          # Clean up the downloaded CHANGELOG.md - we don't want to commit it
+          echo "🧹 Cleaning up temporary CHANGELOG.md..."
+          rm -f CHANGELOG.md
+          
       - name: Create branch and commit
         id: create-branch
         run: |

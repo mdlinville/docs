@@ -313,7 +313,7 @@ def format_version_section(release):
     # Transform content
     transformed_content = transform_content(release['content'])
     
-    # Build the version section
+    # Build the version section with alert
     lines = [
         f"## v{version}",
         f"**{description}**",
@@ -354,14 +354,11 @@ def update_or_create_combined_file(release, output_dir):
             print(f"   Creating it anyway with patch content only...")
             
             # Create a minimal file with just the patch
-            alert_text = '{{% alert color="info" %}}View the [v' + minor_version + '.0 changelog](https://github.com/wandb/wandb/releases/tag/v' + minor_version + '.0) on GitHub.{{% /alert %}}'
             content = f"""---
 title: "{minor_version}.x"
 date: {release['date']}
 description: "Unknown base release date"
 ---
-
-{alert_text}
 
 The latest patch is [**v{version}**](#v{version.replace('.', '')}).
 
@@ -385,8 +382,8 @@ The latest patch is [**v{version}**](#v{version.replace('.', '')}).
                 flags=re.MULTILINE
             )
             
-            # Check if this is the first patch being added
-            is_first_patch = '## v' not in existing_content or not re.search(r'^## v[\d\.]+[1-9]', existing_content, re.MULTILINE)
+            # Check if this is the first patch being added (look for any existing patch versions like v0.18.1, v0.18.2, etc.)
+            is_first_patch = not re.search(r'^## v\d+\.\d+\.[1-9]\d*', existing_content, re.MULTILINE)
             
             # Update or add the latest patch reference
             latest_patch_pattern = r'The latest patch is \[?\*\*v[\d\.]+\*\*\]?(?:\(#[^)]+\))?\.?'
@@ -396,28 +393,21 @@ The latest patch is [**v{version}**](#v{version.replace('.', '')}).
                 # Update existing latest patch reference
                 existing_content = re.sub(latest_patch_pattern, new_latest_patch, existing_content)
             else:
-                # Add latest patch reference and <!-- more --> after the alert (first patch only)
-                alert_pattern = r'({{% alert.*?{{% /alert %}})'
-                match = re.search(alert_pattern, existing_content, re.DOTALL)
-                if match:
-                    alert_end = match.end()
-                    # Find where to insert the latest patch reference
-                    # Look for existing content after the alert
-                    remaining = existing_content[alert_end:]
+                # First patch: add latest patch reference and <!-- more --> after the frontmatter
+                # Find the end of frontmatter (after the second ---)
+                frontmatter_end = existing_content.find('---', 3)  # Find second ---
+                if frontmatter_end != -1:
+                    frontmatter_end = existing_content.find('\n', frontmatter_end) + 1
+                    # Insert the latest patch reference and <!-- more --> after frontmatter
                     if is_first_patch:
-                        # First patch: add both latest patch reference and <!-- more -->
-                        if remaining.startswith('\n\n'):
-                            # There's proper spacing after alert
-                            existing_content = existing_content[:alert_end] + f'\n\n{new_latest_patch}\n\n<!-- more -->' + existing_content[alert_end:]
-                        else:
-                            # Need to add spacing
-                            existing_content = existing_content[:alert_end] + f'\n\n{new_latest_patch}\n\n<!-- more -->\n' + existing_content[alert_end:]
+                        existing_content = (existing_content[:frontmatter_end] + 
+                                          f"\n{new_latest_patch}\n\n<!-- more -->\n" + 
+                                          existing_content[frontmatter_end:])
                     else:
-                        # Subsequent patches: just update the reference (<!-- more --> should already be there)
-                        if remaining.startswith('\n\n'):
-                            existing_content = existing_content[:alert_end] + f'\n\n{new_latest_patch}' + existing_content[alert_end:]
-                        else:
-                            existing_content = existing_content[:alert_end] + f'\n\n{new_latest_patch}\n' + existing_content[alert_end:]
+                        # This shouldn't happen, but handle it anyway
+                        existing_content = (existing_content[:frontmatter_end] + 
+                                          f"\n{new_latest_patch}\n" + 
+                                          existing_content[frontmatter_end:])
             
             # Append the new patch section at the end
             existing_content = existing_content.rstrip() + '\n\n' + format_version_section(release)
@@ -455,26 +445,24 @@ The latest patch is [**v{version}**](#v{version.replace('.', '')}).
         transformed_content = transform_content(main_content)
         
         # Build the Hugo frontmatter and content
-        alert_text = '{{% alert color="info" %}}View the [v' + version + ' changelog](https://github.com/wandb/wandb/releases/tag/v' + version + ') on GitHub.{{% /alert %}}'
-        
         content_parts = [
             f"""---
 title: "{minor_version}.x"
 date: {release['date']}
 description: "{release['description']}"
----
-
-{alert_text}"""]
+---"""]
         
-        # Add intro content if it exists
+        # Add intro content if it exists (this would be any text before the first heading in the changelog)
         if intro_content:
             content_parts.append(f"\n{intro_content}")
         
         # Don't add <!-- more --> for .0 releases (only added when patches are added)
         
-        # Add the version section
+        # Add the version section with its alert
         content_parts.append(f"\n## v{version}")
         content_parts.append(f"**{release['description']}**")
+        content_parts.append("")
+        content_parts.append('{{% alert color="info" %}}View the [v' + version + ' changelog](https://github.com/wandb/wandb/releases/tag/v' + version + ') on GitHub.{{% /alert %}}')
         
         # Add the transformed main content
         if transformed_content.strip():

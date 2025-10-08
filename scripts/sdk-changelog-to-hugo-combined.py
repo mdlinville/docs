@@ -397,8 +397,8 @@ The latest patch is [**v{version}**](#v{version.replace('.', '')}).
                 existing_content = re.sub(latest_patch_pattern, new_latest_patch, existing_content)
             else:
                 # Add latest patch reference and <!-- more --> after the alert (first patch only)
-                alert_pattern = r'({{% alert[^%]+%}})'
-                match = re.search(alert_pattern, existing_content)
+                alert_pattern = r'({{% alert.*?{{% /alert %}})'
+                match = re.search(alert_pattern, existing_content, re.DOTALL)
                 if match:
                     alert_end = match.end()
                     # Find where to insert the latest patch reference

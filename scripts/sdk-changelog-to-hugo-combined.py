@@ -208,17 +208,8 @@ def transform_content(content):
                 # Keep the line as-is if it doesn't match our pattern
                 transformed_lines.append(line)
         elif line.startswith('#'):
-            # Adjust heading levels - reduce by one level (### becomes ##)
-            if line.startswith('### '):
-                transformed_lines.append(line.replace('### ', '## ', 1))
-            elif line.startswith('#### '):
-                transformed_lines.append(line.replace('#### ', '### ', 1))
-            elif line.startswith('##### '):
-                transformed_lines.append(line.replace('##### ', '#### ', 1))
-            elif line.startswith('###### '):
-                transformed_lines.append(line.replace('###### ', '##### ', 1))
-            else:
-                transformed_lines.append(line)
+            # Keep heading levels as-is (### stays as ###)
+            transformed_lines.append(line)
         else:
             # Keep other lines as-is (but with emojis removed)
             transformed_lines.append(line)

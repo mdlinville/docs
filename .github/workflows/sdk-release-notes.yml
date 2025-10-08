@@ -90,7 +90,7 @@ jobs:
           # Check if this exact version has already been added
           if [ -f "$OUTPUT_FILE" ]; then
             echo "📄 Checking if v$VERSION is already in $OUTPUT_FILE..."
-            if grep -q "### v${VERSION}" "$OUTPUT_FILE" 2>/dev/null || grep -q "^## \[${VERSION}\]" "$OUTPUT_FILE" 2>/dev/null; then
+            if grep -q "^## v${VERSION}$" "$OUTPUT_FILE" 2>/dev/null; then
               echo "⚠️ Release notes for v$VERSION already exist in $OUTPUT_FILE"
               echo "❌ Exiting - this version has already been added"
               exit 1

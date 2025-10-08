@@ -133,13 +133,12 @@ def parse_changelog(filepath):
     return releases
 
 
-def transform_content(content, is_patch=False):
+def transform_content(content):
     """
     Transform the changelog content to be more suitable for documentation.
 
     Args:
         content (str): The raw changelog content.
-        is_patch (bool): Whether this is a patch release (affects heading levels).
 
     Returns:
         str: The transformed content.
@@ -209,29 +208,17 @@ def transform_content(content, is_patch=False):
                 # Keep the line as-is if it doesn't match our pattern
                 transformed_lines.append(line)
         elif line.startswith('#'):
-            # Adjust heading levels
-            if is_patch:
-                # For patches, use H4 for sections (### becomes ####)
-                if line.startswith('### '):
-                    transformed_lines.append(line.replace('### ', '#### ', 1))
-                elif line.startswith('#### '):
-                    transformed_lines.append(line.replace('#### ', '##### ', 1))
-                elif line.startswith('##### '):
-                    transformed_lines.append(line.replace('##### ', '###### ', 1))
-                else:
-                    transformed_lines.append(line)
+            # Adjust heading levels - reduce by one level (### becomes ##)
+            if line.startswith('### '):
+                transformed_lines.append(line.replace('### ', '## ', 1))
+            elif line.startswith('#### '):
+                transformed_lines.append(line.replace('#### ', '### ', 1))
+            elif line.startswith('##### '):
+                transformed_lines.append(line.replace('##### ', '#### ', 1))
+            elif line.startswith('###### '):
+                transformed_lines.append(line.replace('###### ', '##### ', 1))
             else:
-                # For main releases, reduce by one level (### becomes ##)
-                if line.startswith('### '):
-                    transformed_lines.append(line.replace('### ', '## ', 1))
-                elif line.startswith('#### '):
-                    transformed_lines.append(line.replace('#### ', '### ', 1))
-                elif line.startswith('##### '):
-                    transformed_lines.append(line.replace('##### ', '#### ', 1))
-                elif line.startswith('###### '):
-                    transformed_lines.append(line.replace('###### ', '##### ', 1))
-                else:
-                    transformed_lines.append(line)
+                transformed_lines.append(line)
         else:
             # Keep other lines as-is (but with emojis removed)
             transformed_lines.append(line)
@@ -275,31 +262,68 @@ def is_patch_release(version):
     return False
 
 
-def format_patch_content(release):
+def get_latest_patch_version(filepath):
     """
-    Format a patch release for inclusion in the Patches section.
+    Get the latest patch version from an existing combined file.
+    
+    Args:
+        filepath (str): Path to the combined markdown file.
+    
+    Returns:
+        str: Latest patch version or None if no patches.
+    """
+    if not os.path.exists(filepath):
+        return None
+    
+    with open(filepath, 'r') as f:
+        content = f.read()
+    
+    # Find all H2 version headers (## v0.21.1, etc.)
+    version_pattern = r'^## v([\d\.]+)$'
+    versions = re.findall(version_pattern, content, re.MULTILINE)
+    
+    if not versions:
+        return None
+    
+    # Filter for patch versions (not .0)
+    patch_versions = [v for v in versions if is_patch_release(v)]
+    
+    if not patch_versions:
+        return None
+    
+    # Sort and return the latest
+    from packaging import version as pkg_version
+    patch_versions.sort(key=pkg_version.parse, reverse=True)
+    return patch_versions[0]
+
+
+def format_version_section(release):
+    """
+    Format a release as a version section (H2).
     
     Args:
         release (dict): Release information.
     
     Returns:
-        str: Formatted patch content.
+        str: Formatted version section.
     """
     version = release['version']
     description = release['description']
     
-    # Transform content with patch-specific heading levels
-    transformed_content = transform_content(release['content'], is_patch=True)
+    # Transform content
+    transformed_content = transform_content(release['content'])
     
-    # Build the patch section
+    # Build the version section
     lines = [
-        f"### v{version}",
+        f"## v{version}",
         f"**{description}**",
         "",
         '{{% alert color="info" %}}View the [v' + version + ' changelog](https://github.com/wandb/wandb/releases/tag/v' + version + ') on GitHub.{{% /alert %}}',
-        "",
-        transformed_content
     ]
+    
+    # Add the transformed content if it's not empty
+    if transformed_content.strip():
+        lines.extend(["", transformed_content])
     
     return '\n'.join(lines)
 
@@ -339,9 +363,12 @@ description: "Unknown base release date"
 
 {alert_text}
 
-## Patches
+The latest patch is [**v{version}**](#v{version.replace('.', '')}).
 
-{format_patch_content(release)}"""
+<!-- more -->
+
+{format_version_section(release)}
+"""
             with open(filepath, 'w') as f:
                 f.write(content)
             print(f"✓ Created: {filepath} (patch only)")
@@ -358,13 +385,42 @@ description: "Unknown base release date"
                 flags=re.MULTILINE
             )
             
-            # Check if Patches section exists
-            if '## Patches' not in existing_content:
-                # Add Patches section
-                existing_content = existing_content.rstrip() + '\n\n## Patches\n\n' + format_patch_content(release)
+            # Check if this is the first patch being added
+            is_first_patch = '## v' not in existing_content or not re.search(r'^## v[\d\.]+[1-9]', existing_content, re.MULTILINE)
+            
+            # Update or add the latest patch reference
+            latest_patch_pattern = r'The latest patch is \[?\*\*v[\d\.]+\*\*\]?(?:\(#[^)]+\))?\.?'
+            new_latest_patch = f'The latest patch is [**v{version}**](#v{version.replace(".", "")}).'
+            
+            if re.search(latest_patch_pattern, existing_content):
+                # Update existing latest patch reference
+                existing_content = re.sub(latest_patch_pattern, new_latest_patch, existing_content)
             else:
-                # Append to existing Patches section
-                existing_content = existing_content.rstrip() + '\n\n' + format_patch_content(release)
+                # Add latest patch reference and <!-- more --> after the alert (first patch only)
+                alert_pattern = r'({{% alert[^%]+%}})'
+                match = re.search(alert_pattern, existing_content)
+                if match:
+                    alert_end = match.end()
+                    # Find where to insert the latest patch reference
+                    # Look for existing content after the alert
+                    remaining = existing_content[alert_end:]
+                    if is_first_patch:
+                        # First patch: add both latest patch reference and <!-- more -->
+                        if remaining.startswith('\n\n'):
+                            # There's proper spacing after alert
+                            existing_content = existing_content[:alert_end] + f'\n\n{new_latest_patch}\n\n<!-- more -->' + existing_content[alert_end:]
+                        else:
+                            # Need to add spacing
+                            existing_content = existing_content[:alert_end] + f'\n\n{new_latest_patch}\n\n<!-- more -->\n' + existing_content[alert_end:]
+                    else:
+                        # Subsequent patches: just update the reference (<!-- more --> should already be there)
+                        if remaining.startswith('\n\n'):
+                            existing_content = existing_content[:alert_end] + f'\n\n{new_latest_patch}' + existing_content[alert_end:]
+                        else:
+                            existing_content = existing_content[:alert_end] + f'\n\n{new_latest_patch}\n' + existing_content[alert_end:]
+            
+            # Append the new patch section at the end
+            existing_content = existing_content.rstrip() + '\n\n' + format_version_section(release)
             
             # Ensure content ends with a newline
             if not existing_content.endswith('\n'):
@@ -376,20 +432,55 @@ description: "Unknown base release date"
             print(f"✓ Updated: {filepath} (added v{version})")
     else:
         # For .0 releases, create a new file
-        transformed_content = transform_content(release['content'], is_patch=False)
+        # First, add any introductory content that comes before the first heading
+        lines = release['content'].split('\n')
+        intro_lines = []
+        main_content_lines = []
+        found_first_heading = False
+        
+        for line in lines:
+            if not found_first_heading and not line.startswith('#'):
+                # This is intro content before the first heading
+                if line.strip():  # Skip empty lines
+                    intro_lines.append(remove_emojis(line))
+            else:
+                if line.startswith('#'):
+                    found_first_heading = True
+                main_content_lines.append(line)
+        
+        intro_content = '\n'.join(intro_lines).strip()
+        main_content = '\n'.join(main_content_lines).strip()
+        
+        # Transform the main content
+        transformed_content = transform_content(main_content)
         
         # Build the Hugo frontmatter and content
         alert_text = '{{% alert color="info" %}}View the [v' + version + ' changelog](https://github.com/wandb/wandb/releases/tag/v' + version + ') on GitHub.{{% /alert %}}'
-        content = f"""---
+        
+        content_parts = [
+            f"""---
 title: "{minor_version}.x"
 date: {release['date']}
 description: "{release['description']}"
 ---
 
-{alert_text}
-
-{transformed_content}
-"""
+{alert_text}"""]
+        
+        # Add intro content if it exists
+        if intro_content:
+            content_parts.append(f"\n{intro_content}")
+        
+        # Don't add <!-- more --> for .0 releases (only added when patches are added)
+        
+        # Add the version section
+        content_parts.append(f"\n## v{version}")
+        content_parts.append(f"**{release['description']}**")
+        
+        # Add the transformed main content
+        if transformed_content.strip():
+            content_parts.append(f"\n{transformed_content}")
+        
+        content = '\n'.join(content_parts) + '\n'
         
         # Write file
         with open(filepath, 'w') as f:

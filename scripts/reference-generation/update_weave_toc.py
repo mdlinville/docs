@@ -208,18 +208,10 @@ def update_docs_json(python_modules, typescript_items, service_endpoints):
                             # Update Service API
                             for page in reference_pages:
                                 if isinstance(page, dict) and page.get("group") == "Service API":
-                                    # Keep the index if it exists, then add all endpoints
-                                    new_pages = []
-                                    for existing_page in page.get("pages", []):
-                                        if isinstance(existing_page, str) and existing_page.endswith("/index"):
-                                            new_pages.append(existing_page)
-                                            break
-                                    
-                                    # Add all endpoints
-                                    new_pages.extend(service_endpoints)
-                                    
-                                    page["pages"] = new_pages
-                                    print(f"✓ Updated Service API with {len(service_endpoints)} endpoints")
+                                    # Use the OpenAPI spec directly from the Weave service
+                                    # This ensures we're always using the current production spec
+                                    page["openapi"] = "https://trace.wandb.ai/openapi.json"
+                                    print(f"✓ Updated Service API to use remote OpenAPI spec")
                                     updated = True
                             
                             break

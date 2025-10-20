@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Update docs.json TOC with newly generated Weave Python SDK reference documentation.
+Update docs.json TOC with newly generated Weave reference documentation.
+Updates Python SDK, TypeScript SDK, and Service API sections.
 """
 
 import json
@@ -8,7 +9,7 @@ import os
 from pathlib import Path
 
 
-def get_generated_modules():
+def get_generated_python_modules():
     """Scan the weave/reference/python-sdk directory to find all generated modules."""
     sdk_dir = Path("weave/reference/python-sdk")
     modules = {}
@@ -59,110 +60,200 @@ def get_generated_modules():
     return modules
 
 
-def update_docs_json(modules):
-    """Update the docs.json file with the new module structure."""
+def get_typescript_items():
+    """Scan the weave/reference/typescript-sdk directory for generated items."""
+    ts_dir = Path("weave/reference/typescript-sdk/weave")
+    items = {}
+    
+    if not ts_dir.exists():
+        return items
+    
+    # Check for different subdirectories
+    for subdir in ["classes", "functions", "interfaces", "type-aliases"]:
+        subdir_path = ts_dir / subdir
+        if subdir_path.exists():
+            items[subdir] = []
+            for mdx_file in subdir_path.glob("*.mdx"):
+                name = mdx_file.stem
+                toc_path = f"weave/reference/typescript-sdk/weave/{subdir}/{name}"
+                items[subdir].append(toc_path)
+            items[subdir].sort()
+    
+    return items
+
+
+def get_service_api_endpoints():
+    """Scan the weave/reference/service-api directory for generated endpoints."""
+    api_dir = Path("weave/reference/service-api")
+    endpoints = []
+    
+    if not api_dir.exists():
+        return endpoints
+    
+    for mdx_file in api_dir.glob("*.mdx"):
+        # Skip index files
+        if mdx_file.name == "index.mdx":
+            continue
+        
+        name = mdx_file.stem
+        toc_path = f"weave/reference/service-api/{name}"
+        endpoints.append(toc_path)
+    
+    return sorted(endpoints)
+
+
+def update_docs_json(python_modules, typescript_items, service_endpoints):
+    """Update the docs.json file with all reference documentation."""
     
     # Read current docs.json
     with open("docs.json", "r") as f:
         docs = json.load(f)
     
-    # Find the Weave Python SDK section in the navigation
-    # This is a nested structure, so we need to traverse it
-    def find_and_update_python_sdk(nav_item):
-        """Recursively find and update the Python SDK section."""
-        if isinstance(nav_item, dict):
-            # Check if this is the Python SDK group
-            if nav_item.get("group") == "Python SDK":
-                # Found it! Update the pages
-                pages = nav_item.get("pages", [])
-                
-                # Keep the index page if it exists
-                new_pages = []
-                for page in pages:
-                    if isinstance(page, str) and page.endswith("/index"):
-                        new_pages.append(page)
-                        break
-                
-                # Add the grouped modules
-                if "Core" in modules and modules["Core"]:
-                    new_pages.append({
-                        "group": "Core",
-                        "pages": modules["Core"]
-                    })
-                
-                if "Trace Server" in modules and modules["Trace Server"]:
-                    new_pages.append({
-                        "group": "Trace Server",
-                        "pages": modules["Trace Server"]
-                    })
-                
-                if "Trace Server Bindings" in modules and modules["Trace Server Bindings"]:
-                    new_pages.append({
-                        "group": "Trace Server Bindings",
-                        "pages": modules["Trace Server Bindings"]
-                    })
-                
-                if "Other" in modules and modules["Other"]:
-                    new_pages.append({
-                        "group": "Other",
-                        "pages": modules["Other"]
-                    })
-                
-                nav_item["pages"] = new_pages
-                return True
-            
-            # Recursively check pages
-            if "pages" in nav_item:
-                for page in nav_item["pages"]:
-                    if find_and_update_python_sdk(page):
-                        return True
-        
-        elif isinstance(nav_item, list):
-            for item in nav_item:
-                if find_and_update_python_sdk(item):
-                    return True
-        
-        return False
-    
-    # Update the navigation
-    if "navigation" in docs:
-        for nav in docs["navigation"]:
-            if "tabs" in nav:
-                for tab in nav["tabs"]:
-                    if tab.get("tab") == "W&B Weave":
-                        if find_and_update_python_sdk(tab):
-                            break
+    # Navigate to the W&B Weave tab
+    for tab in docs.get("tabs", []):
+        if tab.get("title") == "W&B Weave":
+            # Find the Reference group
+            for group in tab.get("pages", []):
+                if isinstance(group, dict) and group.get("group") == "Reference":
+                    reference_pages = group.get("pages", [])
+                    
+                    # Update Python SDK
+                    for i, page in enumerate(reference_pages):
+                        if isinstance(page, dict) and page.get("group") == "Python SDK":
+                            # Keep the index page if it exists
+                            new_pages = []
+                            for existing_page in page.get("pages", []):
+                                if isinstance(existing_page, str) and existing_page.endswith("/index"):
+                                    new_pages.append(existing_page)
+                                    break
+                            
+                            # Add the grouped modules
+                            if "Core" in python_modules and python_modules["Core"]:
+                                new_pages.append({
+                                    "group": "Core",
+                                    "pages": python_modules["Core"]
+                                })
+                            
+                            if "Trace Server" in python_modules and python_modules["Trace Server"]:
+                                new_pages.append({
+                                    "group": "Trace Server",
+                                    "pages": python_modules["Trace Server"]
+                                })
+                            
+                            if "Trace Server Bindings" in python_modules and python_modules["Trace Server Bindings"]:
+                                new_pages.append({
+                                    "group": "Trace Server Bindings",
+                                    "pages": python_modules["Trace Server Bindings"]
+                                })
+                            
+                            if "Other" in python_modules and python_modules["Other"]:
+                                new_pages.append({
+                                    "group": "Other",
+                                    "pages": python_modules["Other"]
+                                })
+                            
+                            page["pages"] = new_pages
+                            print(f"✓ Updated Python SDK with {sum(len(m) for m in python_modules.values())} modules")
+                    
+                    # Update TypeScript SDK
+                    for i, page in enumerate(reference_pages):
+                        if isinstance(page, dict) and page.get("group") == "TypeScript SDK":
+                            # Keep the index and README if they exist
+                            new_pages = []
+                            for existing_page in page.get("pages", []):
+                                if isinstance(existing_page, str) and (existing_page.endswith("/index") or existing_page.endswith("/README")):
+                                    new_pages.append(existing_page)
+                            
+                            # Add the categorized items
+                            if "classes" in typescript_items and typescript_items["classes"]:
+                                new_pages.append({
+                                    "group": "classes",
+                                    "pages": typescript_items["classes"]
+                                })
+                            
+                            if "functions" in typescript_items and typescript_items["functions"]:
+                                new_pages.append({
+                                    "group": "functions",
+                                    "pages": typescript_items["functions"]
+                                })
+                            
+                            if "interfaces" in typescript_items and typescript_items["interfaces"]:
+                                new_pages.append({
+                                    "group": "interfaces",
+                                    "pages": typescript_items["interfaces"]
+                                })
+                            
+                            if "type-aliases" in typescript_items and typescript_items["type-aliases"]:
+                                new_pages.append({
+                                    "group": "type-aliases",
+                                    "pages": typescript_items["type-aliases"]
+                                })
+                            
+                            page["pages"] = new_pages
+                            print(f"✓ Updated TypeScript SDK with {sum(len(items) for items in typescript_items.values())} items")
+                    
+                    # Update Service API
+                    for i, page in enumerate(reference_pages):
+                        if isinstance(page, dict) and page.get("group") == "Service API":
+                            # Keep the index if it exists, then add all endpoints
+                            new_pages = []
+                            for existing_page in page.get("pages", []):
+                                if isinstance(existing_page, str) and existing_page.endswith("/index"):
+                                    new_pages.append(existing_page)
+                                    break
+                            
+                            # Add all endpoints
+                            new_pages.extend(service_endpoints)
+                            
+                            page["pages"] = new_pages
+                            print(f"✓ Updated Service API with {len(service_endpoints)} endpoints")
+                    
+                    break
+            break
     
     # Write updated docs.json
     with open("docs.json", "w") as f:
         json.dump(docs, f, indent=2)
     
-    print("✓ Updated docs.json with new Python SDK modules")
+    print("✓ Updated docs.json with all reference documentation")
 
 
 def main():
     """Main function."""
-    print("Updating Weave Python SDK TOC in docs.json...")
+    print("Updating Weave reference documentation TOC in docs.json...\n")
     
-    # Get the generated modules
-    modules = get_generated_modules()
+    # Get Python SDK modules
+    python_modules = get_generated_python_modules()
+    if python_modules:
+        print(f"Found Python SDK modules in {len(python_modules)} groups:")
+        for group, pages in python_modules.items():
+            print(f"  {group}: {len(pages)} modules")
+    else:
+        print("No Python SDK modules found")
     
-    if not modules:
-        print("No Python SDK modules found to add to TOC")
-        return
+    # Get TypeScript SDK items
+    typescript_items = get_typescript_items()
+    if typescript_items:
+        print(f"\nFound TypeScript SDK items:")
+        for category, items in typescript_items.items():
+            print(f"  {category}: {len(items)} items")
+    else:
+        print("\nNo TypeScript SDK items found")
     
-    print(f"Found modules in {len(modules)} groups:")
-    for group, pages in modules.items():
-        print(f"  {group}: {len(pages)} modules")
-        for page in pages[:3]:  # Show first 3 as examples
-            print(f"    - {page}")
-        if len(pages) > 3:
-            print(f"    ... and {len(pages) - 3} more")
+    # Get Service API endpoints
+    service_endpoints = get_service_api_endpoints()
+    if service_endpoints:
+        print(f"\nFound {len(service_endpoints)} Service API endpoints")
+    else:
+        print("\nNo Service API endpoints found")
     
     # Update docs.json
-    update_docs_json(modules)
-    
-    print("\n✓ TOC update complete!")
+    if python_modules or typescript_items or service_endpoints:
+        print("\nUpdating docs.json...")
+        update_docs_json(python_modules, typescript_items, service_endpoints)
+        print("\n✓ TOC update complete!")
+    else:
+        print("\n⚠️  No reference documentation found to update")
 
 
 if __name__ == "__main__":

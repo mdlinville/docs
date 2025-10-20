@@ -257,19 +257,20 @@ def generate_module_docs(module, module_name: str, src_root_path: str, version: 
     
     # Fix lines that are incorrectly marked as parameters but are actually continuations
     # This happens when lazydocs misinterprets continuation lines in docstrings as new parameters
-    # Common patterns include:
-    # 1. Lines starting with descriptive phrases (To find, See, Refer, etc.)
-    # 2. Lines containing URLs (which lazydocs won't fix upstream)
-    # 3. Lines that clearly continue the previous parameter's description
+    # The most common case is when a parameter description contains a line break and the
+    # continuation line gets treated as a new parameter starting with '- <b>`SomeText...'
     lines = content.split('\n')
     fixed_lines = []
     i = 0
     while i < len(lines):
         line = lines[i]
-        # Check if this line looks like a misidentified continuation
-        if line.startswith('- <b>`') and i > 0:
+        # Check if this line is incorrectly marked as a parameter but is actually a continuation
+        # Look for lines that start with ' - <b>`' (note the leading space) followed by text
+        # that doesn't look like a parameter name
+        if line.strip().startswith('- <b>`') and i > 0:
             # Extract the content after '- <b>`'
-            inner_content = line[7:]
+            stripped = line.strip()
+            inner_content = stripped[6:]  # Skip '- <b>`'
             
             # Check if this is likely a continuation rather than a parameter name
             is_continuation = False
@@ -294,13 +295,19 @@ def generate_module_docs(module, module_name: str, src_root_path: str, version: 
             
             if is_continuation:
                 # This should be a continuation of the previous parameter's description
-                # Remove the "- <b>`" prefix and any trailing `</b>
-                continuation = inner_content.rstrip()
+                # Extract just the text content, removing the incorrect parameter markup
+                continuation = inner_content.strip()
+                
+                # Remove any trailing backtick or </b> if present
                 if continuation.endswith('`</b>'):
-                    continuation = continuation[:-5]
+                    continuation = continuation[:-5].strip()
+                elif continuation.endswith('`'):
+                    continuation = continuation[:-1].strip()
+                
                 # Append to the previous line if it's a parameter line
                 if fixed_lines and fixed_lines[-1].strip().startswith('- '):
-                    fixed_lines[-1] = fixed_lines[-1].rstrip() + ' ' + continuation.strip()
+                    # Make sure there's a space before appending
+                    fixed_lines[-1] = fixed_lines[-1].rstrip() + ' ' + continuation
                 else:
                     fixed_lines.append(line)  # Fallback if we can't merge
             else:

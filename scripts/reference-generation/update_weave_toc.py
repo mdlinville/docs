@@ -176,30 +176,30 @@ def update_docs_json(python_modules, typescript_items, service_endpoints):
                                         if isinstance(existing_page, str) and (existing_page.endswith("/index") or existing_page.endswith("/README")):
                                             new_pages.append(existing_page)
                                     
-                            # Add the categorized items with proper casing for display
-                            if "classes" in typescript_items and typescript_items["classes"]:
-                                new_pages.append({
-                                    "group": "Classes",
-                                    "pages": typescript_items["classes"]
-                                })
-                            
-                            if "functions" in typescript_items and typescript_items["functions"]:
-                                new_pages.append({
-                                    "group": "Functions",
-                                    "pages": typescript_items["functions"]
-                                })
-                            
-                            if "interfaces" in typescript_items and typescript_items["interfaces"]:
-                                new_pages.append({
-                                    "group": "Interfaces",
-                                    "pages": typescript_items["interfaces"]
-                                })
-                            
-                            if "type-aliases" in typescript_items and typescript_items["type-aliases"]:
-                                new_pages.append({
-                                    "group": "Type Aliases",
-                                    "pages": typescript_items["type-aliases"]
-                                })
+                                    # Add the categorized items
+                                    if "classes" in typescript_items and typescript_items["classes"]:
+                                        new_pages.append({
+                                            "group": "classes",
+                                            "pages": typescript_items["classes"]
+                                        })
+                                    
+                                    if "functions" in typescript_items and typescript_items["functions"]:
+                                        new_pages.append({
+                                            "group": "functions",
+                                            "pages": typescript_items["functions"]
+                                        })
+                                    
+                                    if "interfaces" in typescript_items and typescript_items["interfaces"]:
+                                        new_pages.append({
+                                            "group": "interfaces",
+                                            "pages": typescript_items["interfaces"]
+                                        })
+                                    
+                                    if "type-aliases" in typescript_items and typescript_items["type-aliases"]:
+                                        new_pages.append({
+                                            "group": "type-aliases",
+                                            "pages": typescript_items["type-aliases"]
+                                        })
                                     
                                     page["pages"] = new_pages
                                     print(f"✓ Updated TypeScript SDK with {sum(len(items) for items in typescript_items.values())} items")

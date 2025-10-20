@@ -348,7 +348,7 @@ def generate_module_docs(module, module_name: str, src_root_path: str, version: 
                 
                 # Reconstruct the parameter list with proper formatting
                 for param in params:
-                    fixed_lines.append(f" - <b>`{param['name']}`</b>:  {param['desc']}")
+                    fixed_lines.append(f" - <b>`{param['name']}`</b>: {param['desc']}")
                 
             else:
                 fixed_lines.append(line)

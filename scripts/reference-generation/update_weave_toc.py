@@ -176,28 +176,28 @@ def update_docs_json(python_modules, typescript_items, service_endpoints):
                                         if isinstance(existing_page, str) and (existing_page.endswith("/index") or existing_page.endswith("/README")):
                                             new_pages.append(existing_page)
                                     
-                                    # Add the categorized items
+                                    # Add the categorized items with proper casing
                                     if "classes" in typescript_items and typescript_items["classes"]:
                                         new_pages.append({
-                                            "group": "classes",
+                                            "group": "Classes",
                                             "pages": typescript_items["classes"]
                                         })
                                     
                                     if "functions" in typescript_items and typescript_items["functions"]:
                                         new_pages.append({
-                                            "group": "functions",
+                                            "group": "Functions",
                                             "pages": typescript_items["functions"]
                                         })
                                     
                                     if "interfaces" in typescript_items and typescript_items["interfaces"]:
                                         new_pages.append({
-                                            "group": "interfaces",
+                                            "group": "Interfaces",
                                             "pages": typescript_items["interfaces"]
                                         })
                                     
                                     if "type-aliases" in typescript_items and typescript_items["type-aliases"]:
                                         new_pages.append({
-                                            "group": "type-aliases",
+                                            "group": "Type Aliases",
                                             "pages": typescript_items["type-aliases"]
                                         })
                                     

@@ -293,40 +293,68 @@ def generate_module_docs(module, module_name: str, src_root_path: str, version: 
                     
                     # Check if this is a parameter line
                     if stripped.startswith('- <b>`'):
-                        # Extract parameter name and description
-                        match = re.match(r'^- <b>`([^`]+)`</b>:\s*(.*)', stripped)
-                        if match:
-                            # This looks like a real parameter
-                            param_name = match.group(1)
-                            param_desc = match.group(2)
-                            
-                            # Check if the parameter name is valid (no spaces, starts with letter/underscore)
-                            if re.match(r'^[a-zA-Z_][\w_]*(\.[a-zA-Z_][\w_]*)*$', param_name):
-                                # Save previous param if exists
-                                if current_param:
-                                    params.append(current_param)
-                                current_param = {'name': param_name, 'desc': param_desc}
-                            else:
-                                # This is likely a continuation that was incorrectly marked
-                                # Extract the content after '- <b>`'
-                                continuation = stripped[6:]
-                                if continuation.endswith('`'):
-                                    continuation = continuation[:-1]
-                                # Append to current parameter's description
-                                if current_param:
-                                    current_param['desc'] += ' ' + continuation
-                                else:
-                                    # No current param to append to, keep as is
-                                    fixed_lines.append(curr_line)
-                        else:
-                            # Malformed parameter line, might be a continuation
-                            continuation = stripped[6:] if len(stripped) > 6 else ''
+                        # First check if this line is clearly a continuation (not a real parameter)
+                        # Look for common patterns that indicate continuation text
+                        potential_content = stripped[6:]  # Content after '- <b>`'
+                        
+                        # Common continuation patterns
+                        is_likely_continuation = False
+                        if potential_content.startswith(('Some ', 'All ', 'The ', 'If ', 'When ', 'For ', 'This ', 'Note:', 'Example:', 'Default:')):
+                            is_likely_continuation = True
+                        elif ':' in potential_content and potential_content.index(':') > 20:
+                            # If colon appears late in the line, it's probably descriptive text
+                            is_likely_continuation = True
+                        
+                        if is_likely_continuation:
+                            # Treat this as a continuation line
+                            continuation = potential_content
+                            # Remove any stray closing tags
+                            continuation = continuation.replace('`</b>', '').strip()
                             if continuation.endswith('`'):
-                                continuation = continuation[:-1]
+                                continuation = continuation[:-1].strip()
                             if current_param:
                                 current_param['desc'] += ' ' + continuation
                             else:
                                 fixed_lines.append(curr_line)
+                        else:
+                            # Try to parse as a parameter
+                            # Extract parameter name and description
+                            match = re.match(r'^- <b>`([^`]+)`</b>:\s*(.*)', stripped)
+                            if match:
+                                # This looks like a real parameter
+                                param_name = match.group(1)
+                                param_desc = match.group(2)
+                                
+                                # Check if the parameter name is valid (no spaces, starts with letter/underscore)
+                                if re.match(r'^[a-zA-Z_][\w_]*(\.[a-zA-Z_][\w_]*)*$', param_name):
+                                    # Save previous param if exists
+                                    if current_param:
+                                        params.append(current_param)
+                                    current_param = {'name': param_name, 'desc': param_desc}
+                                else:
+                                    # This is likely a continuation that was incorrectly marked
+                                    # Extract the content after '- <b>`'
+                                    continuation = stripped[6:]
+                                    if continuation.endswith('`'):
+                                        continuation = continuation[:-1]
+                                    # Append to current parameter's description
+                                    if current_param:
+                                        current_param['desc'] += ' ' + continuation
+                                    else:
+                                        # No current param to append to, keep as is
+                                        fixed_lines.append(curr_line)
+                            else:
+                                # Malformed parameter line, might be a continuation
+                                # This handles cases like "- <b>`Some text without closing backtick"
+                                continuation = stripped[6:] if len(stripped) > 6 else ''
+                                # Remove any stray closing tags
+                                continuation = continuation.replace('`</b>', '').strip()
+                                if continuation.endswith('`'):
+                                    continuation = continuation[:-1].strip()
+                                if current_param:
+                                    current_param['desc'] += ' ' + continuation
+                                else:
+                                    fixed_lines.append(curr_line)
                     else:
                         # Regular line, might be continuation of description
                         if current_param and stripped:

@@ -208,10 +208,10 @@ def update_docs_json(python_modules, typescript_items, service_endpoints):
                             # Update Service API
                             for page in reference_pages:
                                 if isinstance(page, dict) and page.get("group") == "Service API":
-                                    # Use the processed OpenAPI spec that has fixes applied
-                                    # The spec is saved locally after applying necessary transformations
-                                    page["openapi"] = "weave/reference/service-api/openapi.json"
-                                    print(f"✓ Updated Service API to use processed OpenAPI spec")
+                                    # Point directly to the raw OpenAPI spec
+                                    # Mintlify should be able to handle this and generate all endpoints
+                                    page["openapi"] = "https://trace.wandb.ai/openapi.json"
+                                    print(f"✓ Updated Service API to use remote OpenAPI spec (41 endpoints)")
                                     updated = True
                             
                             break

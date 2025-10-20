@@ -109,113 +109,129 @@ def update_docs_json(python_modules, typescript_items, service_endpoints):
     with open("docs.json", "r") as f:
         docs = json.load(f)
     
-    # Navigate to the W&B Weave tab
-    for tab in docs.get("tabs", []):
-        if tab.get("title") == "W&B Weave":
-            # Find the Reference group
-            for group in tab.get("pages", []):
-                if isinstance(group, dict) and group.get("group") == "Reference":
-                    reference_pages = group.get("pages", [])
-                    
-                    # Update Python SDK
-                    for i, page in enumerate(reference_pages):
-                        if isinstance(page, dict) and page.get("group") == "Python SDK":
-                            # Keep the index page if it exists
-                            new_pages = []
-                            for existing_page in page.get("pages", []):
-                                if isinstance(existing_page, str) and existing_page.endswith("/index"):
-                                    new_pages.append(existing_page)
-                                    break
+    # Navigate through the navigation structure
+    # The structure is: navigation.languages[0].tabs[x].tab="W&B Weave"
+    navigation = docs.get("navigation", {})
+    languages = navigation.get("languages", [])
+    if not languages:
+        print("⚠️  No languages found in navigation")
+        return
+    
+    updated = False
+    # Look for English navigation (first language)
+    for lang in languages:
+        if lang.get("language") == "en" and "tabs" in lang:
+            for tab in lang["tabs"]:
+                if tab.get("tab") == "W&B Weave":
+                    # Find the Reference group
+                    for group in tab.get("pages", []):
+                        if isinstance(group, dict) and group.get("group") == "Reference":
+                            reference_pages = group.get("pages", [])
                             
-                            # Add the grouped modules
-                            if "Core" in python_modules and python_modules["Core"]:
-                                new_pages.append({
-                                    "group": "Core",
-                                    "pages": python_modules["Core"]
-                                })
+                            # Update Python SDK
+                            for page in reference_pages:
+                                if isinstance(page, dict) and page.get("group") == "Python SDK":
+                                    # Keep the index page if it exists
+                                    new_pages = []
+                                    for existing_page in page.get("pages", []):
+                                        if isinstance(existing_page, str) and existing_page.endswith("/index"):
+                                            new_pages.append(existing_page)
+                                            break
+                                    
+                                    # Add the grouped modules
+                                    if "Core" in python_modules and python_modules["Core"]:
+                                        new_pages.append({
+                                            "group": "Core",
+                                            "pages": python_modules["Core"]
+                                        })
+                                    
+                                    if "Trace Server" in python_modules and python_modules["Trace Server"]:
+                                        new_pages.append({
+                                            "group": "Trace Server",
+                                            "pages": python_modules["Trace Server"]
+                                        })
+                                    
+                                    if "Trace Server Bindings" in python_modules and python_modules["Trace Server Bindings"]:
+                                        new_pages.append({
+                                            "group": "Trace Server Bindings",
+                                            "pages": python_modules["Trace Server Bindings"]
+                                        })
+                                    
+                                    if "Other" in python_modules and python_modules["Other"]:
+                                        new_pages.append({
+                                            "group": "Other",
+                                            "pages": python_modules["Other"]
+                                        })
+                                    
+                                    page["pages"] = new_pages
+                                    print(f"✓ Updated Python SDK with {sum(len(m) for m in python_modules.values())} modules")
+                                    updated = True
                             
-                            if "Trace Server" in python_modules and python_modules["Trace Server"]:
-                                new_pages.append({
-                                    "group": "Trace Server",
-                                    "pages": python_modules["Trace Server"]
-                                })
+                            # Update TypeScript SDK
+                            for page in reference_pages:
+                                if isinstance(page, dict) and page.get("group") == "TypeScript SDK":
+                                    # Keep the index and README if they exist
+                                    new_pages = []
+                                    for existing_page in page.get("pages", []):
+                                        if isinstance(existing_page, str) and (existing_page.endswith("/index") or existing_page.endswith("/README")):
+                                            new_pages.append(existing_page)
+                                    
+                                    # Add the categorized items
+                                    if "classes" in typescript_items and typescript_items["classes"]:
+                                        new_pages.append({
+                                            "group": "classes",
+                                            "pages": typescript_items["classes"]
+                                        })
+                                    
+                                    if "functions" in typescript_items and typescript_items["functions"]:
+                                        new_pages.append({
+                                            "group": "functions",
+                                            "pages": typescript_items["functions"]
+                                        })
+                                    
+                                    if "interfaces" in typescript_items and typescript_items["interfaces"]:
+                                        new_pages.append({
+                                            "group": "interfaces",
+                                            "pages": typescript_items["interfaces"]
+                                        })
+                                    
+                                    if "type-aliases" in typescript_items and typescript_items["type-aliases"]:
+                                        new_pages.append({
+                                            "group": "type-aliases",
+                                            "pages": typescript_items["type-aliases"]
+                                        })
+                                    
+                                    page["pages"] = new_pages
+                                    print(f"✓ Updated TypeScript SDK with {sum(len(items) for items in typescript_items.values())} items")
+                                    updated = True
                             
-                            if "Trace Server Bindings" in python_modules and python_modules["Trace Server Bindings"]:
-                                new_pages.append({
-                                    "group": "Trace Server Bindings",
-                                    "pages": python_modules["Trace Server Bindings"]
-                                })
+                            # Update Service API
+                            for page in reference_pages:
+                                if isinstance(page, dict) and page.get("group") == "Service API":
+                                    # Keep the index if it exists, then add all endpoints
+                                    new_pages = []
+                                    for existing_page in page.get("pages", []):
+                                        if isinstance(existing_page, str) and existing_page.endswith("/index"):
+                                            new_pages.append(existing_page)
+                                            break
+                                    
+                                    # Add all endpoints
+                                    new_pages.extend(service_endpoints)
+                                    
+                                    page["pages"] = new_pages
+                                    print(f"✓ Updated Service API with {len(service_endpoints)} endpoints")
+                                    updated = True
                             
-                            if "Other" in python_modules and python_modules["Other"]:
-                                new_pages.append({
-                                    "group": "Other",
-                                    "pages": python_modules["Other"]
-                                })
-                            
-                            page["pages"] = new_pages
-                            print(f"✓ Updated Python SDK with {sum(len(m) for m in python_modules.values())} modules")
-                    
-                    # Update TypeScript SDK
-                    for i, page in enumerate(reference_pages):
-                        if isinstance(page, dict) and page.get("group") == "TypeScript SDK":
-                            # Keep the index and README if they exist
-                            new_pages = []
-                            for existing_page in page.get("pages", []):
-                                if isinstance(existing_page, str) and (existing_page.endswith("/index") or existing_page.endswith("/README")):
-                                    new_pages.append(existing_page)
-                            
-                            # Add the categorized items
-                            if "classes" in typescript_items and typescript_items["classes"]:
-                                new_pages.append({
-                                    "group": "classes",
-                                    "pages": typescript_items["classes"]
-                                })
-                            
-                            if "functions" in typescript_items and typescript_items["functions"]:
-                                new_pages.append({
-                                    "group": "functions",
-                                    "pages": typescript_items["functions"]
-                                })
-                            
-                            if "interfaces" in typescript_items and typescript_items["interfaces"]:
-                                new_pages.append({
-                                    "group": "interfaces",
-                                    "pages": typescript_items["interfaces"]
-                                })
-                            
-                            if "type-aliases" in typescript_items and typescript_items["type-aliases"]:
-                                new_pages.append({
-                                    "group": "type-aliases",
-                                    "pages": typescript_items["type-aliases"]
-                                })
-                            
-                            page["pages"] = new_pages
-                            print(f"✓ Updated TypeScript SDK with {sum(len(items) for items in typescript_items.values())} items")
-                    
-                    # Update Service API
-                    for i, page in enumerate(reference_pages):
-                        if isinstance(page, dict) and page.get("group") == "Service API":
-                            # Keep the index if it exists, then add all endpoints
-                            new_pages = []
-                            for existing_page in page.get("pages", []):
-                                if isinstance(existing_page, str) and existing_page.endswith("/index"):
-                                    new_pages.append(existing_page)
-                                    break
-                            
-                            # Add all endpoints
-                            new_pages.extend(service_endpoints)
-                            
-                            page["pages"] = new_pages
-                            print(f"✓ Updated Service API with {len(service_endpoints)} endpoints")
-                    
+                            break
                     break
-            break
     
-    # Write updated docs.json
-    with open("docs.json", "w") as f:
-        json.dump(docs, f, indent=2)
-    
-    print("✓ Updated docs.json with all reference documentation")
+    if updated:
+        # Write updated docs.json
+        with open("docs.json", "w") as f:
+            json.dump(docs, f, indent=2)
+        print("✓ Updated docs.json with all reference documentation")
+    else:
+        print("⚠️  Could not find Reference sections to update in docs.json")
 
 
 def main():

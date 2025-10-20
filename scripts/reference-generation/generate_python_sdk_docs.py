@@ -255,67 +255,103 @@ def generate_module_docs(module, module_name: str, src_root_path: str, version: 
     # Remove <b>` at the start of lines that don't have a closing </b>
     content = re.sub(r'^- <b>`([^`\n]*?)$', r'- \1', content, flags=re.MULTILINE)
     
-    # Fix lines that are incorrectly marked as parameters but are actually continuations
-    # This happens when lazydocs misinterprets continuation lines in docstrings as new parameters
-    # The most common case is when a parameter description contains a line break and the
-    # continuation line gets treated as a new parameter starting with '- <b>`SomeText...'
-    lines = content.split('\n')
-    fixed_lines = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        # Check if this line is incorrectly marked as a parameter but is actually a continuation
-        # Look for lines that start with ' - <b>`' (note the leading space) followed by text
-        # that doesn't look like a parameter name
-        if line.strip().startswith('- <b>`') and i > 0:
-            # Extract the content after '- <b>`'
-            stripped = line.strip()
-            inner_content = stripped[6:]  # Skip '- <b>`'
+    # Fix parameter lists that have been broken by lazydocs
+    # Strategy: Parse all parameters into a structured format, then reconstruct them properly
+    def fix_parameter_lists(text):
+        """Fix parameter lists where continuations are incorrectly marked as new parameters."""
+        lines = text.split('\n')
+        fixed_lines = []
+        i = 0
+        
+        while i < len(lines):
+            line = lines[i]
             
-            # Check if this is likely a continuation rather than a parameter name
-            is_continuation = False
-            
-            # Pattern 1: Starts with common continuation phrases
-            if re.match(r'^(To find|To see|To update|To learn|For more|See|Refer|Documentation|Available|Note:|Example:|Usage:|Warning:|Important:)', inner_content, re.IGNORECASE):
-                is_continuation = True
-            
-            # Pattern 2: Contains a URL (lazydocs incorrectly splits these)
-            elif 'http://' in inner_content or 'https://' in inner_content or 'docs.wandb.ai' in inner_content:
-                is_continuation = True
-            
-            # Pattern 3: Starts with lowercase (parameter names typically start uppercase or with underscore)
-            elif inner_content and inner_content[0].islower() and not inner_content.startswith('_'):
-                is_continuation = True
-            
-            # Pattern 4: Contains spaces before the colon (parameter names don't have spaces)
-            elif ':' in inner_content:
-                pre_colon = inner_content.split(':')[0]
-                if ' ' in pre_colon and not pre_colon.strip().replace('_', '').replace('-', '').isalnum():
-                    is_continuation = True
-            
-            if is_continuation:
-                # This should be a continuation of the previous parameter's description
-                # Extract just the text content, removing the incorrect parameter markup
-                continuation = inner_content.strip()
+            # Check if we're at the start of a parameter list (Args: or similar)
+            if line.strip() in ['**Args:**', '**Arguments:**', '**Parameters:**', '**Kwargs:**']:
+                fixed_lines.append(line)
+                i += 1
                 
-                # Remove any trailing backtick or </b> if present
-                if continuation.endswith('`</b>'):
-                    continuation = continuation[:-5].strip()
-                elif continuation.endswith('`'):
-                    continuation = continuation[:-1].strip()
+                # Collect all parameter lines until we hit a non-parameter section
+                params = []
+                current_param = None
                 
-                # Append to the previous line if it's a parameter line
-                if fixed_lines and fixed_lines[-1].strip().startswith('- '):
-                    # Make sure there's a space before appending
-                    fixed_lines[-1] = fixed_lines[-1].rstrip() + ' ' + continuation
-                else:
-                    fixed_lines.append(line)  # Fallback if we can't merge
+                while i < len(lines):
+                    curr_line = lines[i]
+                    stripped = curr_line.strip()
+                    
+                    # Check if we've reached the end of the parameter list
+                    if stripped.startswith('**') and stripped.endswith(':**'):
+                        break  # Hit the next section (Returns:, Raises:, etc.)
+                    if not stripped:
+                        # Empty line might signal end of params
+                        if current_param:
+                            params.append(current_param)
+                            current_param = None
+                        fixed_lines.append(curr_line)
+                        i += 1
+                        continue
+                    
+                    # Check if this is a parameter line
+                    if stripped.startswith('- <b>`'):
+                        # Extract parameter name and description
+                        match = re.match(r'^- <b>`([^`]+)`</b>:\s*(.*)', stripped)
+                        if match:
+                            # This looks like a real parameter
+                            param_name = match.group(1)
+                            param_desc = match.group(2)
+                            
+                            # Check if the parameter name is valid (no spaces, starts with letter/underscore)
+                            if re.match(r'^[a-zA-Z_][\w_]*(\.[a-zA-Z_][\w_]*)*$', param_name):
+                                # Save previous param if exists
+                                if current_param:
+                                    params.append(current_param)
+                                current_param = {'name': param_name, 'desc': param_desc}
+                            else:
+                                # This is likely a continuation that was incorrectly marked
+                                # Extract the content after '- <b>`'
+                                continuation = stripped[6:]
+                                if continuation.endswith('`'):
+                                    continuation = continuation[:-1]
+                                # Append to current parameter's description
+                                if current_param:
+                                    current_param['desc'] += ' ' + continuation
+                                else:
+                                    # No current param to append to, keep as is
+                                    fixed_lines.append(curr_line)
+                        else:
+                            # Malformed parameter line, might be a continuation
+                            continuation = stripped[6:] if len(stripped) > 6 else ''
+                            if continuation.endswith('`'):
+                                continuation = continuation[:-1]
+                            if current_param:
+                                current_param['desc'] += ' ' + continuation
+                            else:
+                                fixed_lines.append(curr_line)
+                    else:
+                        # Regular line, might be continuation of description
+                        if current_param and stripped:
+                            # This is a continuation of the current parameter's description
+                            current_param['desc'] += ' ' + stripped
+                        else:
+                            fixed_lines.append(curr_line)
+                    
+                    i += 1
+                
+                # Add the last parameter if exists
+                if current_param:
+                    params.append(current_param)
+                
+                # Reconstruct the parameter list with proper formatting
+                for param in params:
+                    fixed_lines.append(f" - <b>`{param['name']}`</b>:  {param['desc']}")
+                
             else:
                 fixed_lines.append(line)
-        else:
-            fixed_lines.append(line)
-        i += 1
-    content = '\n'.join(fixed_lines)
+                i += 1
+        
+        return '\n'.join(fixed_lines)
+    
+    content = fix_parameter_lists(content)
     
     # Convert to Mintlify format
     content = convert_docusaurus_to_mintlify(content, module_name)

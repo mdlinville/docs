@@ -65,14 +65,14 @@ client.add_cost(llm_id="my_expensive_custom_model", prompt_token_cost=500, compl
 
 **Args:**
  
- - <b>`llm_id`</b>:  The ID of the LLM. eg "gpt-4o-mini-2024-07-18" 
- - <b>`prompt_token_cost`</b>:  The cost per prompt token. eg .0005 
- - <b>`completion_token_cost`</b>:  The cost per completion token. eg .0015 
- - <b>`effective_date`</b>:  Defaults to the current date. A datetime.datetime object. 
- - <b>`provider_id`</b>:  The provider of the LLM. Defaults to "default". eg "openai" 
- - <b>`prompt_token_cost_unit`</b>:  The unit of the cost for the prompt tokens. Defaults to "USD". (Currently unused, will be used in the future to specify the currency type for the cost eg "tokens" or "time") 
- - <b>`completion_token_cost_unit`</b>:  The unit of the cost for the completion tokens. Defaults to "USD". (Currently unused, will be used in the future to specify the currency type for the cost eg "tokens" or "time") 
 
+ - <b>`llm_id`</b>:  The ID of the LLM. eg "gpt-4o-mini-2024-07-18"
+ - <b>`prompt_token_cost`</b>:  The cost per prompt token. eg .0005
+ - <b>`completion_token_cost`</b>:  The cost per completion token. eg .0015
+ - <b>`effective_date`</b>:  Defaults to the current date. A datetime.datetime object.
+ - <b>`provider_id`</b>:  The provider of the LLM. Defaults to "default". eg "openai"
+ - <b>`prompt_token_cost_unit`</b>:  The unit of the cost for the prompt tokens. Defaults to "USD". (Currently unused, will be used in the future to specify the currency type for the cost eg "tokens" or "time")
+ - <b>`completion_token_cost_unit`</b>:  The unit of the cost for the completion tokens. Defaults to "USD". (Currently unused, will be used in the future to specify the currency type for the cost eg "tokens" or "time")
 **Returns:**
  A CostCreateRes object. Which has one field called a list of tuples called ids. Each tuple contains the llm_id and the id of the created cost object. 
 
@@ -121,13 +121,13 @@ Create, log, and push a call onto the runtime stack.
 
 **Args:**
  
- - <b>`op`</b>:  The operation producing the call, or the name of an anonymous operation. 
- - <b>`inputs`</b>:  The inputs to the operation. 
- - <b>`parent`</b>:  The parent call. If parent is not provided, the current run is used as the parent. 
- - <b>`display_name`</b>:  The display name for the call. Defaults to None. 
- - <b>`attributes`</b>:  The attributes for the call. Defaults to None. 
- - <b>`use_stack`</b>:  Whether to push the call onto the runtime stack. Defaults to True. 
 
+ - <b>`op`</b>:  The operation producing the call, or the name of an anonymous operation.
+ - <b>`inputs`</b>:  The inputs to the operation.
+ - <b>`parent`</b>:  The parent call. If parent is not provided, the current run is used as the parent.
+ - <b>`display_name`</b>:  The display name for the call. Defaults to None.
+ - <b>`attributes`</b>:  The attributes for the call. Defaults to None.
+ - <b>`use_stack`</b>:  Whether to push the call onto the runtime stack. Defaults to True.
 **Returns:**
  The created Call object. 
 
@@ -145,8 +145,8 @@ Delete all versions of an object.
 
 **Args:**
  
- - <b>`object_name`</b>:  The name of the object whose versions should be deleted. 
 
+ - <b>`object_name`</b>:  The name of the object whose versions should be deleted.
 **Returns:**
  The number of versions deleted. 
 
@@ -164,8 +164,8 @@ Delete all versions of an op.
 
 **Args:**
  
- - <b>`op_name`</b>:  The name of the op whose versions should be deleted. 
 
+ - <b>`op_name`</b>:  The name of the op whose versions should be deleted.
 **Returns:**
  The number of versions deleted. 
 
@@ -195,7 +195,6 @@ Deleting a call will also delete all of its children.
 
 **Args:**
  
- - <b>`call_ids`</b>:  A list of call IDs to delete. Ex: ["2F0193e107-8fcf-7630-b576-977cc3062e2e"] 
 
 ---
 
@@ -219,11 +218,12 @@ delete_object_versions(object_name: 'str', digests: 'list[str]') → int
 
 Delete specific versions of an object. 
 
+ - <b>`call_ids`</b>:  A list of call IDs to delete. Ex: ["2F0193e107-8fcf-7630-b576-977cc3062e2e"]
 **Args:**
  
- - <b>`object_name`</b>:  The name of the object whose versions should be deleted. 
- - <b>`digests`</b>:  List of digests to delete. Can include aliases like "latest" or "v0". 
 
+ - <b>`object_name`</b>:  The name of the object whose versions should be deleted.
+ - <b>`digests`</b>:  List of digests to delete. Can include aliases like "latest" or "v0".
 **Returns:**
  The number of versions deleted. 
 
@@ -283,8 +283,6 @@ This method blocks until all currently enqueued jobs are processed, displaying a
 
 **Args:**
  
- - <b>`use_progress_bar`</b>:  Whether to display a progress bar during flush.  Set to False for environments where a progress bar  would not render well (e.g., CI environments). 
- - <b>`callback`</b>:  Optional callback function that receives status updates.  Overrides use_progress_bar. 
 
 ---
 
@@ -344,14 +342,15 @@ get_call(
 
 Get a single call by its ID. 
 
+ - <b>`use_progress_bar`</b>:  Whether to display a progress bar during flush.  Set to False for environments where a progress bar  would not render well (e.g., CI environments).
+ - <b>`callback`</b>:  Optional callback function that receives status updates.  Overrides use_progress_bar.
 **Args:**
  
- - <b>`call_id`</b>:  The ID of the call to get. 
- - <b>`include_costs`</b>:  If true, cost info is included at summary.weave 
- - <b>`include_feedback`</b>:  If true, feedback info is included at summary.weave.feedback 
- - <b>`columns`</b>:  A list of columns to include in the response. If None,  all columns are included. Specifying fewer columns may be more performant. 
- - <b>`Some columns are always included`</b>:  id, project_id, trace_id, op_name, started_at 
 
+ - <b>`call_id`</b>:  The ID of the call to get.
+ - <b>`include_costs`</b>:  If true, cost info is included at summary.weave
+ - <b>`include_feedback`</b>:  If true, feedback info is included at summary.weave.feedback
+ - <b>`columns`</b>:  A list of columns to include in the response. If None,  all columns are included. Specifying fewer columns may be more performant. Some columns are always included`</b>:  id, project_id, trace_id, op_name, started_at
 **Returns:**
  A call object. 
 
@@ -519,11 +518,11 @@ client.get_feedback(query=query)
 
 **Args:**
  
- - <b>`query`</b>:  A mongo-style query expression. For convenience, also accepts a feedback UUID string. 
- - <b>`reaction`</b>:  For convenience, filter by a particular reaction emoji. 
- - <b>`offset`</b>:  The offset to start fetching feedback objects from. 
- - <b>`limit`</b>:  The maximum number of feedback objects to fetch. 
 
+ - <b>`query`</b>:  A mongo-style query expression. For convenience, also accepts a feedback UUID string.
+ - <b>`reaction`</b>:  For convenience, filter by a particular reaction emoji.
+ - <b>`offset`</b>:  The offset to start fetching feedback objects from.
+ - <b>`limit`</b>:  The maximum number of feedback objects to fetch.
 **Returns:**
  A FeedbackQuery object. 
 
@@ -547,7 +546,6 @@ client.purge_costs(ids)
 
 **Args:**
  
- - <b>`ids`</b>:  The cost IDs to purge. Can be a single ID or a list of IDs. 
 
 ---
 
@@ -566,6 +564,7 @@ query_costs(
 
 Query project for costs. 
 
+ - <b>`ids`</b>:  The cost IDs to purge. Can be a single ID or a list of IDs.
 **Examples:**
 ```python
 # Fetch a specific cost object.
@@ -579,11 +578,11 @@ client.query_costs(llm_ids=["gpt-4o-mini-2024-07-18"], limit=10)
 
 **Args:**
  
- - <b>`query`</b>:  A mongo-style query expression. For convenience, also accepts a cost UUID string. 
- - <b>`llm_ids`</b>:  For convenience, filter for a set of llm_ids. 
- - <b>`offset`</b>:  The offset to start fetching cost objects from. 
- - <b>`limit`</b>:  The maximum number of cost objects to fetch. 
 
+ - <b>`query`</b>:  A mongo-style query expression. For convenience, also accepts a cost UUID string.
+ - <b>`llm_ids`</b>:  For convenience, filter for a set of llm_ids.
+ - <b>`offset`</b>:  The offset to start fetching cost objects from.
+ - <b>`limit`</b>:  The maximum number of cost objects to fetch.
 **Returns:**
  A CostQuery object. 
 
@@ -601,10 +600,10 @@ Do not call directly, use weave.publish() instead.
 
 **Args:**
  
- - <b>`val`</b>:  The object to save. 
- - <b>`name`</b>:  The name to save the object under. 
- - <b>`branch`</b>:  The branch to save the object under. Defaults to "latest". 
 
+ - <b>`val`</b>:  The object to save.
+ - <b>`name`</b>:  The name to save the object under.
+ - <b>`branch`</b>:  The branch to save the object under. Defaults to "latest".
 **Returns:**
  A deserialized version of the saved object. 
 
@@ -692,9 +691,9 @@ apply_scorer(
 
 **Args:**
  
- - <b>`scorer`</b>:  The Scorer to apply. 
- - <b>`additional_scorer_kwargs`</b>:  Additional kwargs to pass to the scorer. This is  useful for passing in additional context that is not part of the call  inputs.useful for passing in additional context that is not part of the call  inputs. 
 
+ - <b>`scorer`</b>:  The Scorer to apply.
+ - <b>`additional_scorer_kwargs`</b>:  Additional kwargs to pass to the scorer. This is  useful for passing in additional context that is not part of the call  inputs.useful for passing in additional context that is not part of the call  inputs.
 **Returns:**
  The result of the scorer application in the form of an `ApplyScorerResult`. 
 
@@ -728,8 +727,8 @@ Get the children of the call.
 
 **Args:**
  
- - <b>`page_size`</b>:  Tune performance by changing the number of calls fetched at a time. 
 
+ - <b>`page_size`</b>:  Tune performance by changing the number of calls fetched at a time.
 **Returns:**
  An iterator of calls. 
 
@@ -769,8 +768,8 @@ Set the display name for the call.
 
 **Args:**
  
- - <b>`name`</b>:  The display name to set for the call. 
 
+ - <b>`name`</b>:  The display name to set for the call.
 **Example:**
 ```python
 result, call = my_function.call("World")

@@ -208,10 +208,22 @@ def update_docs_json(python_modules, typescript_items, service_endpoints):
                             # Update Service API
                             for page in reference_pages:
                                 if isinstance(page, dict) and page.get("group") == "Service API":
-                                    # Point directly to the raw OpenAPI spec
-                                    # Mintlify should be able to handle this and generate all endpoints
-                                    page["openapi"] = "https://trace.wandb.ai/openapi.json"
-                                    print(f"✓ Updated Service API to use remote OpenAPI spec (41 endpoints)")
+                                    # Point to the versioned OpenAPI spec in the Weave repo
+                                    # This spec already has the necessary filters applied
+                                    import os
+                                    version = os.environ.get('WEAVE_VERSION', 'latest')
+                                    
+                                    # The version should already be resolved by the Python SDK generation
+                                    # which converts "latest" to an actual version number
+                                    if version and version != "latest":
+                                        # Use the specific version tag
+                                        openapi_url = f"https://raw.githubusercontent.com/wandb/weave/v{version}/sdks/node/weave.openapi.json"
+                                    else:
+                                        # Fallback to master if somehow we don't have a version
+                                        openapi_url = "https://raw.githubusercontent.com/wandb/weave/master/sdks/node/weave.openapi.json"
+                                    
+                                    page["openapi"] = openapi_url
+                                    print(f"✓ Updated Service API to use versioned OpenAPI spec: {openapi_url}")
                                     updated = True
                             
                             break

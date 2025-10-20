@@ -106,7 +106,7 @@ jobs:
     - name: Update TOC
       run: |
         echo "Updating docs.json TOC with new Python SDK modules..."
-        python scripts/reference-generation/update_weave_toc.py
+        WEAVE_VERSION="${{ steps.python-sdk.outputs.actual_version || steps.version.outputs.version }}" python scripts/reference-generation/update_weave_toc.py
         
     - name: Fix broken links
       run: |

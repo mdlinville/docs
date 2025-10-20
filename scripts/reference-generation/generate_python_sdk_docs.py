@@ -254,6 +254,9 @@ def generate_module_docs(module, module_name: str, src_root_path: str, version: 
     # Fix unclosed <b> tags that break MDX parsing
     # Remove <b>` at the start of lines that don't have a closing </b>
     content = re.sub(r'^- <b>`([^`\n]*?)$', r'- \1', content, flags=re.MULTILINE)
+    # Also handle the specific case where "To find..." is incorrectly marked as an argument
+    # This is a continuation of the previous argument's description
+    content = re.sub(r'^- <b>`To find.*?$', lambda m: '  ' + m.group(0)[7:], content, flags=re.MULTILINE)
     
     # Convert to Mintlify format
     content = convert_docusaurus_to_mintlify(content, module_name)

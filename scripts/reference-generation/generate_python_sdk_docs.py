@@ -254,9 +254,61 @@ def generate_module_docs(module, module_name: str, src_root_path: str, version: 
     # Fix unclosed <b> tags that break MDX parsing
     # Remove <b>` at the start of lines that don't have a closing </b>
     content = re.sub(r'^- <b>`([^`\n]*?)$', r'- \1', content, flags=re.MULTILINE)
-    # Also handle the specific case where "To find..." is incorrectly marked as an argument
-    # This is a continuation of the previous argument's description
-    content = re.sub(r'^- <b>`To find.*?$', lambda m: '  ' + m.group(0)[7:], content, flags=re.MULTILINE)
+    
+    # Fix lines that are incorrectly marked as parameters but are actually continuations
+    # This happens when lazydocs misinterprets continuation lines in docstrings as new parameters
+    # Common patterns include:
+    # 1. Lines starting with descriptive phrases (To find, See, Refer, etc.)
+    # 2. Lines containing URLs (which lazydocs won't fix upstream)
+    # 3. Lines that clearly continue the previous parameter's description
+    lines = content.split('\n')
+    fixed_lines = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        # Check if this line looks like a misidentified continuation
+        if line.startswith('- <b>`') and i > 0:
+            # Extract the content after '- <b>`'
+            inner_content = line[7:]
+            
+            # Check if this is likely a continuation rather than a parameter name
+            is_continuation = False
+            
+            # Pattern 1: Starts with common continuation phrases
+            if re.match(r'^(To find|To see|To update|To learn|For more|See|Refer|Documentation|Available|Note:|Example:|Usage:|Warning:|Important:)', inner_content, re.IGNORECASE):
+                is_continuation = True
+            
+            # Pattern 2: Contains a URL (lazydocs incorrectly splits these)
+            elif 'http://' in inner_content or 'https://' in inner_content or 'docs.wandb.ai' in inner_content:
+                is_continuation = True
+            
+            # Pattern 3: Starts with lowercase (parameter names typically start uppercase or with underscore)
+            elif inner_content and inner_content[0].islower() and not inner_content.startswith('_'):
+                is_continuation = True
+            
+            # Pattern 4: Contains spaces before the colon (parameter names don't have spaces)
+            elif ':' in inner_content:
+                pre_colon = inner_content.split(':')[0]
+                if ' ' in pre_colon and not pre_colon.strip().replace('_', '').replace('-', '').isalnum():
+                    is_continuation = True
+            
+            if is_continuation:
+                # This should be a continuation of the previous parameter's description
+                # Remove the "- <b>`" prefix and any trailing `</b>
+                continuation = inner_content.rstrip()
+                if continuation.endswith('`</b>'):
+                    continuation = continuation[:-5]
+                # Append to the previous line if it's a parameter line
+                if fixed_lines and fixed_lines[-1].strip().startswith('- '):
+                    fixed_lines[-1] = fixed_lines[-1].rstrip() + ' ' + continuation.strip()
+                else:
+                    fixed_lines.append(line)  # Fallback if we can't merge
+            else:
+                fixed_lines.append(line)
+        else:
+            fixed_lines.append(line)
+        i += 1
+    content = '\n'.join(fixed_lines)
     
     # Convert to Mintlify format
     content = convert_docusaurus_to_mintlify(content, module_name)

@@ -195,9 +195,12 @@ def convert_to_mintlify_format(docs_dir):
         if title_match:
             content = content.replace(title_match.group(0), '', 1).strip()
         
+        # Fix escaped angle brackets in title (TypeDoc escapes them as \< and \>)
+        title_fixed = title.replace('\\<', '<').replace('\\>', '>')
+        
         # Add Mintlify frontmatter
         frontmatter = f"""---
-title: "{title}"
+title: "{title_fixed}"
 description: "TypeScript SDK reference"
 ---
 

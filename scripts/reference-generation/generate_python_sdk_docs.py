@@ -251,6 +251,9 @@ def generate_module_docs(module, module_name: str, src_root_path: str, version: 
     content = re.sub(r'\]\(http`</b>:\s*//', '](http://', content)
     # Fix broken bold tags around URLs
     content = re.sub(r'<b>`([^`]+)\]\(([^)]+)`</b>', r'**\1](\2**', content)
+    # Fix unclosed <b> tags that break MDX parsing
+    # Remove <b>` at the start of lines that don't have a closing </b>
+    content = re.sub(r'^- <b>`([^`\n]*?)$', r'- \1', content, flags=re.MULTILINE)
     
     # Convert to Mintlify format
     content = convert_docusaurus_to_mintlify(content, module_name)

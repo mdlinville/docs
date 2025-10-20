@@ -20,7 +20,7 @@ description: "Python SDK reference for weave"
 
 ### <kbd>function</kbd> `init`
 
-```python lines
+```python
 init(
     project_name: 'str',
     settings: 'UserSettings | dict[str, Any] | None' = None,
@@ -42,7 +42,7 @@ Following init, calls of weave.op() decorated functions will be logged to the sp
 **Args:**
  
  - <b>`project_name`</b>:  The name of the Weights & Biases team and project to log to. If you don't  specify a team, your default entity is used. 
- - <b>`To find or update your default entity, refer to [User Settings](https`</b>: //docs.wandb.ai/platform/app/settings-page/user-settings/#default-team) in the W&B Models documentation. 
+ - <b>`To find or update your default entity, refer to [User Settings](https`</b>: //docs.wandb.ai/guides/models/app/settings-page/user-settings/#default-team) in the W&B Models documentation. 
  - <b>`settings`</b>:  Configuration for the Weave client generally. 
  - <b>`autopatch_settings`</b>:  (Deprecated) Configuration for autopatch integrations. Use explicit patching instead. 
  - <b>`global_postprocess_inputs`</b>:  A function that will be applied to all inputs of all ops. 
@@ -64,7 +64,7 @@ NOTE: Global postprocessing settings are applied to all ops after each op's own 
 
 ### <kbd>function</kbd> `publish`
 
-```python lines
+```python
 publish(obj: 'Any', name: 'str | None' = None) → ObjectRef
 ```
 
@@ -92,7 +92,7 @@ Weave creates a new version of the object if the object's name already exists an
 
 ### <kbd>function</kbd> `ref`
 
-```python lines
+```python
 ref(location: 'str') → ObjectRef
 ```
 
@@ -117,7 +117,7 @@ Creates a Ref to an existing Weave object. This does not directly retrieve the o
 
 ### <kbd>function</kbd> `get`
 
-```python lines
+```python
 get(uri: 'str | ObjectRef') → Any
 ```
 
@@ -139,7 +139,7 @@ Many objects logged by Weave are automatically registered with the Weave server.
 
 
 **Example:**
-```python lines
+```python
 weave.init("weave_get_example")
 dataset = weave.Dataset(rows=[{"a": 1, "b": 2}])
 ref = weave.publish(dataset)
@@ -155,7 +155,7 @@ dataset2 = weave.get(ref)  # same as dataset!
 
 ### <kbd>function</kbd> `require_current_call`
 
-```python lines
+```python
 require_current_call() → Call
 ```
 
@@ -163,7 +163,7 @@ Get the Call object for the currently executing Op, within that Op.
 
 This allows you to access attributes of the Call such as its id or feedback while it is running. 
 
-```python lines
+```python
 @weave.op
 def hello(name: str) -> None:
      print(f"Hello {name}!")
@@ -175,14 +175,14 @@ It is also possible to access a Call after the Op has returned.
 
 If you have the Call's id, perhaps from the UI, you can use the `get_call` method on the `WeaveClient` returned from `weave.init` to retrieve the Call object. 
 
-```python lines
+```python
 client = weave.init("<project>")
 mycall = client.get_call("<call_id>")
 ```
 
 Alternately, after defining your Op you can use its `call` method. For example: 
 
-```python lines
+```python
 @weave.op
 def add(a: int, b: int) -> int:
      return a + b
@@ -210,7 +210,7 @@ print(call.id)
 
 ### <kbd>function</kbd> `get_current_call`
 
-```python lines
+```python
 get_current_call() → Call | None
 ```
 
@@ -235,7 +235,7 @@ Get the Call object for the currently executing Op, within that Op.
 
 ### <kbd>function</kbd> `finish`
 
-```python lines
+```python
 finish() → None
 ```
 
@@ -247,11 +247,11 @@ Following finish, calls of weave.op() decorated functions will no longer be logg
 ---
 
 
-<a href="https://github.com/wandb/weave/blob/master/weave/trace/op.py#L1185"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/trace/op.py#L1194"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>function</kbd> `op`
 
-```python lines
+```python
 op(
     func: 'Callable[P, R] | None' = None,
     name: 'str | None' = None,
@@ -274,7 +274,7 @@ A decorator to weave op-ify a function or method. Works for both sync and async.
 
 ### <kbd>function</kbd> `attributes`
 
-```python lines
+```python
 attributes(attributes: 'dict[str, Any]') → Iterator
 ```
 
@@ -283,7 +283,7 @@ Context manager for setting attributes on a call.
 
 
 **Example:**
-```python lines
+```python
 with weave.attributes({'env': 'production'}):
      print(my_function.call("World"))
 ```
@@ -296,9 +296,9 @@ with weave.attributes({'env': 'production'}):
 
 ### <kbd>function</kbd> `thread`
 
-```python lines
+```python
 thread(
-    thread_id: 'str | None | object' = <object object at 0x7f9ce5b8ce30>
+    thread_id: 'str | None | object' = <object object at 0x7f519c090e60>
 ) → Iterator[ThreadContext]
 ```
 
@@ -307,7 +307,7 @@ Context manager for setting thread_id on calls within the context.
 
 
 **Examples:**
-```python lines
+```python
 # Auto-generate thread_id
 with weave.thread() as t:
      print(f"Thread ID: {t.thread_id}")
@@ -357,12 +357,12 @@ This class extends Pydantic's BaseModel to provide Weave-specific functionality 
 
 
 **Examples:**
-```python lines
+```python
 # Create a simple object
 obj = Object(name="my_object", description="A test object")
 
 # Create an object from a URI
-obj = Object.from_uri("weave://entity/project/object:digest")
+obj = Object.from_uri("weave:///entity/project/object:digest")
 ```
 
 
@@ -379,7 +379,7 @@ obj = Object.from_uri("weave://entity/project/object:digest")
 
 ### <kbd>classmethod</kbd> `from_uri`
 
-```python lines
+```python
 from_uri(uri: str, objectify: bool = True) → Self
 ```
 
@@ -407,8 +407,8 @@ Create an object instance from a Weave URI.
 
 
 **Examples:**
-```python lines
-obj = MyObject.from_uri("weave://entity/project/object:digest")
+```python
+obj = MyObject.from_uri("weave:///entity/project/object:digest")
 ```
 
 ---
@@ -417,7 +417,7 @@ obj = MyObject.from_uri("weave://entity/project/object:digest")
 
 ### <kbd>classmethod</kbd> `handle_relocatable_object`
 
-```python lines
+```python
 handle_relocatable_object(
     v: Any,
     handler: ValidatorFunctionWrapHandler,
@@ -446,7 +446,7 @@ This validator handles special cases where the input is an ObjectRef or WeaveObj
 
 
 **Examples:**
- This method is called automatically during object creation and validation. It handles cases like: ```python lines
+ This method is called automatically during object creation and validation. It handles cases like: ```python
     # When an ObjectRef is passed
     obj = MyObject(some_object_ref)
 
@@ -467,7 +467,7 @@ Dataset object with easy saving and automatic versioning.
 
 
 **Examples:**
-```python lines
+```python
 # Create a dataset
 dataset = Dataset(name='grammar', rows=[
      {'id': '0', 'sentence': "He no likes ice cream.", 'correction': "He doesn't like ice cream."},
@@ -500,7 +500,7 @@ example_label = dataset_ref.rows[2]['sentence']
 
 ### <kbd>method</kbd> `add_rows`
 
-```python lines
+```python
 add_rows(rows: Iterable[dict]) → Dataset
 ```
 
@@ -525,7 +525,7 @@ This is useful for adding examples to large datasets without having to load the 
 
 ### <kbd>classmethod</kbd> `convert_to_table`
 
-```python lines
+```python
 convert_to_table(rows: Any) → Union[Table, WeaveTable]
 ```
 
@@ -539,7 +539,7 @@ convert_to_table(rows: Any) → Union[Table, WeaveTable]
 
 ### <kbd>classmethod</kbd> `from_calls`
 
-```python lines
+```python
 from_calls(calls: Iterable[Call]) → Self
 ```
 
@@ -553,7 +553,7 @@ from_calls(calls: Iterable[Call]) → Self
 
 ### <kbd>classmethod</kbd> `from_hf`
 
-```python lines
+```python
 from_hf(
     hf_dataset: Union[ForwardRef('HFDataset'), ForwardRef('HFDatasetDict')]
 ) → Self
@@ -569,7 +569,7 @@ from_hf(
 
 ### <kbd>classmethod</kbd> `from_obj`
 
-```python lines
+```python
 from_obj(obj: WeaveObject) → Self
 ```
 
@@ -583,7 +583,7 @@ from_obj(obj: WeaveObject) → Self
 
 ### <kbd>classmethod</kbd> `from_pandas`
 
-```python lines
+```python
 from_pandas(df: 'DataFrame') → Self
 ```
 
@@ -597,7 +597,7 @@ from_pandas(df: 'DataFrame') → Self
 
 ### <kbd>method</kbd> `select`
 
-```python lines
+```python
 select(indices: Iterable[int]) → Self
 ```
 
@@ -620,7 +620,7 @@ Select rows from the dataset based on the provided indices.
 
 ### <kbd>method</kbd> `to_hf`
 
-```python lines
+```python
 to_hf() → HFDataset
 ```
 
@@ -634,7 +634,7 @@ to_hf() → HFDataset
 
 ### <kbd>method</kbd> `to_pandas`
 
-```python lines
+```python
 to_pandas() → DataFrame
 ```
 
@@ -657,7 +657,7 @@ When you change the attributes or the code that defines your model, these change
 
 
 **Examples:**
-```python lines
+```python
 class YourModel(Model):
      attribute1: str
      attribute2: int
@@ -683,7 +683,7 @@ class YourModel(Model):
 
 ### <kbd>method</kbd> `get_infer_method`
 
-```python lines
+```python
 get_infer_method() → Callable
 ```
 
@@ -717,7 +717,7 @@ get_infer_method() → Callable
 
 ### <kbd>method</kbd> `format`
 
-```python lines
+```python
 format(**kwargs: Any) → Any
 ```
 
@@ -741,7 +741,7 @@ format(**kwargs: Any) → Any
 
 ### <kbd>method</kbd> `__init__`
 
-```python lines
+```python
 __init__(content: str)
 ```
 
@@ -764,7 +764,7 @@ __init__(content: str)
 
 ### <kbd>method</kbd> `format`
 
-```python lines
+```python
 format(**kwargs: Any) → str
 ```
 
@@ -778,7 +778,7 @@ format(**kwargs: Any) → str
 
 ### <kbd>classmethod</kbd> `from_obj`
 
-```python lines
+```python
 from_obj(obj: WeaveObject) → Self
 ```
 
@@ -802,7 +802,7 @@ from_obj(obj: WeaveObject) → Self
 
 ### <kbd>method</kbd> `__init__`
 
-```python lines
+```python
 __init__(messages: list[dict])
 ```
 
@@ -825,7 +825,7 @@ __init__(messages: list[dict])
 
 ### <kbd>method</kbd> `format`
 
-```python lines
+```python
 format(**kwargs: Any) → list
 ```
 
@@ -839,7 +839,7 @@ format(**kwargs: Any) → list
 
 ### <kbd>method</kbd> `format_message`
 
-```python lines
+```python
 format_message(message: dict, **kwargs: Any) → dict
 ```
 
@@ -853,7 +853,7 @@ format_message(message: dict, **kwargs: Any) → dict
 
 ### <kbd>classmethod</kbd> `from_obj`
 
-```python lines
+```python
 from_obj(obj: WeaveObject) → Self
 ```
 
@@ -880,7 +880,7 @@ If you want to preprocess the rows from the dataset you can pass in a function t
 
 
 **Examples:**
-```python lines
+```python
 # Collect your examples
 examples = [
      {"question": "What is the capital of France?", "expected": "Paris"},
@@ -918,7 +918,7 @@ asyncio.run(evaluation.evaluate(function_to_evaluate))
 - `description`: `typing.Optional[str]`
 - `ref`: `typing.Optional[trace.refs.ObjectRef]`
 - `dataset`: `<class 'dataset.dataset.Dataset'>`
-- `scorers`: `typing.Optional[list[typing.Annotated[typing.Union[trace.op_protocol.Op, flow.scorer.Scorer], BeforeValidator(func=<function cast_to_scorer at 0x7f9ce59d5760>, json_schema_input_type=PydanticUndefined)]]]`
+- `scorers`: `typing.Optional[list[typing.Annotated[typing.Union[trace.op_protocol.Op, flow.scorer.Scorer], BeforeValidator(func=<function cast_to_scorer at 0x7f519be5b880>, json_schema_input_type=PydanticUndefined)]]]`
 - `preprocess_model_input`: `typing.Optional[typing.Callable[[dict], dict]]`
 - `trials`: `<class 'int'>`
 - `metadata`: `typing.Optional[dict[str, typing.Any]]`
@@ -930,7 +930,7 @@ asyncio.run(evaluation.evaluate(function_to_evaluate))
 
 ### <kbd>method</kbd> `evaluate`
 
-```python lines
+```python
 evaluate(model: Union[Op, Model]) → dict
 ```
 
@@ -944,7 +944,7 @@ evaluate(model: Union[Op, Model]) → dict
 
 ### <kbd>classmethod</kbd> `from_obj`
 
-```python lines
+```python
 from_obj(obj: WeaveObject) → Self
 ```
 
@@ -958,7 +958,7 @@ from_obj(obj: WeaveObject) → Self
 
 ### <kbd>method</kbd> `get_eval_results`
 
-```python lines
+```python
 get_eval_results(model: Union[Op, Model]) → EvaluationResults
 ```
 
@@ -972,7 +972,7 @@ get_eval_results(model: Union[Op, Model]) → EvaluationResults
 
 ### <kbd>method</kbd> `get_evaluate_calls`
 
-```python lines
+```python
 get_evaluate_calls() → PaginatedIterator[CallSchema, WeaveObject]
 ```
 
@@ -995,7 +995,7 @@ Note that this returns a CallsIter instead of a single call because it's possibl
 
 
 **Examples:**
-```python lines
+```python
 evaluation = Evaluation(dataset=examples, scorers=[scorer])
 await evaluation.evaluate(model)  # Run evaluation first
 calls = evaluation.get_evaluate_calls()
@@ -1009,7 +1009,7 @@ for call in calls:
 
 ### <kbd>method</kbd> `get_score_calls`
 
-```python lines
+```python
 get_score_calls() → dict[str, list[Call]]
 ```
 
@@ -1024,7 +1024,7 @@ Retrieve scorer calls for each evaluation run, grouped by trace ID.
 
 
 **Examples:**
-```python lines
+```python
 evaluation = Evaluation(dataset=examples, scorers=[accuracy_scorer, f1_scorer])
 await evaluation.evaluate(model)
 score_calls = evaluation.get_score_calls()
@@ -1041,7 +1041,7 @@ for trace_id, calls in score_calls.items():
 
 ### <kbd>method</kbd> `get_scores`
 
-```python lines
+```python
 get_scores() → dict[str, dict[str, list[Any]]]
 ```
 
@@ -1059,7 +1059,7 @@ Extract and organize scorer outputs from evaluation runs.
 
 
 **Examples:**
-```python lines
+```python
 evaluation = Evaluation(dataset=examples, scorers=[accuracy_scorer, f1_scorer])
 await evaluation.evaluate(model)
 scores = evaluation.get_scores()
@@ -1087,7 +1087,7 @@ Expected output:
 
 ### <kbd>method</kbd> `model_post_init`
 
-```python lines
+```python
 model_post_init(_Evaluation__context: Any) → None
 ```
 
@@ -1101,7 +1101,7 @@ model_post_init(_Evaluation__context: Any) → None
 
 ### <kbd>method</kbd> `predict_and_score`
 
-```python lines
+```python
 predict_and_score(model: Union[Op, Model], example: dict) → dict
 ```
 
@@ -1115,7 +1115,7 @@ predict_and_score(model: Union[Op, Model], example: dict) → dict
 
 ### <kbd>method</kbd> `summarize`
 
-```python lines
+```python
 summarize(eval_table: EvaluationResults) → dict
 ```
 
@@ -1128,7 +1128,7 @@ summarize(eval_table: EvaluationResults) → dict
 ---
 
 
-<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L361"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L633"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ## <kbd>class</kbd> `EvaluationLogger`
 This class provides an imperative interface for logging evaluations. 
@@ -1137,14 +1137,34 @@ An evaluation is started automatically when the first prediction is logged using
 
 Each time you log a prediction, you will get back a `ScoreLogger` object. You can use this object to log scores and metadata for that specific prediction. For more information, see the `ScoreLogger` class. 
 
+Basic usage - log predictions with inputs and outputs directly: 
 
-
-**Example:**
-```python lines
+```python
 ev = EvaluationLogger()
-pred = ev.log_prediction(inputs, output)
-pred.log_score(scorer_name, score)
-ev.log_summary(summary)
+
+# Log predictions with known inputs/outputs
+pred = ev.log_prediction(inputs={'q': 'Hello'}, outputs={'a': 'Hi there!'})
+pred.log_score("correctness", 0.9)
+
+# Finish the evaluation
+ev.log_summary({"avg_score": 0.9})
+```
+
+Advanced usage - use context manager for dynamic outputs and nested operations: 
+
+```python
+ev = EvaluationLogger()
+
+# Use context manager when you need to capture nested operations
+with ev.log_prediction(inputs={'q': 'Hello'}) as pred:
+     # Any operations here (like LLM calls) automatically become
+     # children of the predict call
+     response = your_llm_call(...)
+     pred.output = response.content
+     pred.log_score("correctness", 0.9)
+
+# Finish the evaluation
+ev.log_summary({"avg_score": 0.9})
 ```
 
 
@@ -1177,11 +1197,11 @@ ev.log_summary(summary)
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L749"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L1086"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `fail`
 
-```python lines
+```python
 fail(exception: 'BaseException') → None
 ```
 
@@ -1189,11 +1209,11 @@ Convenience method to fail the evaluation with an exception.
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L733"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L1070"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `finish`
 
-```python lines
+```python
 finish(exception: 'BaseException | None' = None) → None
 ```
 
@@ -1203,25 +1223,46 @@ Ensures all prediction calls and the main evaluation call are finalized. This is
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L579"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L883"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `log_prediction`
 
-```python lines
-log_prediction(inputs: 'dict', output: 'Any') → ScoreLogger
+```python
+log_prediction(
+    inputs: 'dict[str, Any]',
+    output: 'Any | _NotSetType' = <NOT_SET>
+) → ScoreLogger | _LogPredictionContext
 ```
 
-Log a prediction to the Evaluation, and return a reference. 
+Log a prediction to the Evaluation. 
 
-The reference can be used to log scores which are attached to the specific prediction instance. 
+If output is provided, returns a ScoreLogger for direct use. If output is not provided, returns a PredictionContext for use as a context manager. 
+
+
+
+**Args:**
+ 
+ - <b>`inputs`</b>:  The input data for the prediction 
+ - <b>`output`</b>:  The output value. If not provided, use as context manager to set later. 
+
+
+
+**Returns:**
+ ScoreLogger if output provided, PredictionContext if not. 
+
+Example (direct): 
+ - <b>`pred = ev.log_prediction({'q'`</b>:  '...'}, output="answer") pred.log_score("correctness", 0.9) pred.finish() 
+
+Example (context manager): 
+ - <b>`with ev.log_prediction({'q'`</b>:  '...'}) as pred:  response = model(...)  pred.output = response  pred.log_score("correctness", 0.9) 
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L627"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L964"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `log_summary`
 
-```python lines
+```python
 log_summary(summary: 'dict | None' = None, auto_summarize: 'bool' = True) → None
 ```
 
@@ -1231,11 +1272,11 @@ This will calculate the summary, call the summarize op, and then finalize the ev
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/pydantic/_internal/_model_construction.py#L452"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/pydantic/_internal/_model_construction.py#L746"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `model_post_init`
 
-```python lines
+```python
 model_post_init(_EvaluationLogger__context: 'Any') → None
 ```
 
@@ -1243,11 +1284,11 @@ Initialize the pseudo evaluation with the dataset from the model.
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L676"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/evaluation/eval_imperative.py#L1013"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `set_view`
 
-```python lines
+```python
 set_view(
     name: 'str',
     content: 'Content | str',
@@ -1313,7 +1354,7 @@ Saves the provided content as an object in the project and writes its reference 
 
 ### <kbd>classmethod</kbd> `from_obj`
 
-```python lines
+```python
 from_obj(obj: WeaveObject) → Self
 ```
 
@@ -1327,7 +1368,7 @@ from_obj(obj: WeaveObject) → Self
 
 ### <kbd>method</kbd> `model_post_init`
 
-```python lines
+```python
 model_post_init(_Scorer__context: Any) → None
 ```
 
@@ -1341,7 +1382,7 @@ model_post_init(_Scorer__context: Any) → None
 
 ### <kbd>method</kbd> `score`
 
-```python lines
+```python
 score(output: Any, **kwargs: Any) → Any
 ```
 
@@ -1355,7 +1396,7 @@ score(output: Any, **kwargs: Any) → Any
 
 ### <kbd>method</kbd> `summarize`
 
-```python lines
+```python
 summarize(score_rows: list) → Optional[dict]
 ```
 
@@ -1391,7 +1432,7 @@ summarize(score_rows: list) → Optional[dict]
 
 ### <kbd>classmethod</kbd> `preprocess_field_schema`
 
-```python lines
+```python
 preprocess_field_schema(data: dict[str, Any]) → dict[str, Any]
 ```
 
@@ -1405,7 +1446,7 @@ preprocess_field_schema(data: dict[str, Any]) → dict[str, Any]
 
 ### <kbd>classmethod</kbd> `validate_field_schema`
 
-```python lines
+```python
 validate_field_schema(schema: dict[str, Any]) → dict[str, Any]
 ```
 
@@ -1419,7 +1460,7 @@ validate_field_schema(schema: dict[str, Any]) → dict[str, Any]
 
 ### <kbd>method</kbd> `value_is_valid`
 
-```python lines
+```python
 value_is_valid(payload: Any) → bool
 ```
 
@@ -1451,7 +1492,7 @@ A class representing a file with path, mimetype, and size information.
 
 ### <kbd>method</kbd> `__init__`
 
-```python lines
+```python
 __init__(path: 'str | Path', mimetype: 'str | None' = None)
 ```
 
@@ -1485,7 +1526,7 @@ Get the filename of the file.
 
 ### <kbd>method</kbd> `open`
 
-```python lines
+```python
 open() → bool
 ```
 
@@ -1505,7 +1546,7 @@ This method uses the platform-specific mechanism to open the file with the defau
 
 ### <kbd>method</kbd> `save`
 
-```python lines
+```python
 save(dest: 'str | Path') → None
 ```
 
@@ -1522,7 +1563,7 @@ Copy the file to the specified destination path.
 ---
 
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L43"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L42"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ## <kbd>class</kbd> `Content`
 A class to represent content from various sources, resolving them to a unified byte-oriented representation with associated metadata. 
@@ -1535,11 +1576,11 @@ This class must be instantiated using one of its classmethods:
 - from_base64() 
 - from_data_url() 
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L90"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L87"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `__init__`
 
-```python lines
+```python
 __init__(*args: 'Any', **kwargs: 'Any') → None
 ```
 
@@ -1549,7 +1590,6 @@ Direct initialization is disabled. Please use a classmethod like `Content.from_p
 
 **Pydantic Fields:**
 
-- `id`: `<class 'str'>`
 - `data`: `<class 'bytes'>`
 - `size`: `<class 'int'>`
 - `mimetype`: `<class 'str'>`
@@ -1559,7 +1599,6 @@ Direct initialization is disabled. Please use a classmethod like `Content.from_p
 - `input_type`: `<class 'str'>`
 - `encoding`: `<class 'str'>`
 - `metadata`: `dict[str, typing.Any] | None`
-- `path`: `str | None`
 - `extension`: `str | None`
 
 ---
@@ -1582,11 +1621,11 @@ Direct initialization is disabled. Please use a classmethod like `Content.from_p
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L542"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L531"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `as_string`
 
-```python lines
+```python
 as_string() → str
 ```
 
@@ -1597,11 +1636,11 @@ Display the data as a string. Bytes are decoded using the `encoding` attribute I
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L252"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L246"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>classmethod</kbd> `from_base64`
 
-```python lines
+```python
 from_base64(
     b64_data: 'str | bytes',
     extension: 'str | None' = None,
@@ -1614,11 +1653,11 @@ Initializes Content from a base64 encoded string or bytes.
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L160"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L156"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>classmethod</kbd> `from_bytes`
 
-```python lines
+```python
 from_bytes(
     data: 'bytes',
     extension: 'str | None' = None,
@@ -1632,11 +1671,11 @@ Initializes Content from raw bytes.
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L354"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L345"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>classmethod</kbd> `from_data_url`
 
-```python lines
+```python
 from_data_url(url: 'str', metadata: 'dict[str, Any] | None' = None) → Self
 ```
 
@@ -1644,11 +1683,11 @@ Initializes Content from a data URL.
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L304"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L297"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>classmethod</kbd> `from_path`
 
-```python lines
+```python
 from_path(
     path: 'str | Path',
     encoding: 'str' = 'utf-8',
@@ -1661,11 +1700,11 @@ Initializes Content from a local file path.
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L202"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L197"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>classmethod</kbd> `from_text`
 
-```python lines
+```python
 from_text(
     text: 'str',
     extension: 'str | None' = None,
@@ -1679,11 +1718,11 @@ Initializes Content from a string of text.
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L397"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L387"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>classmethod</kbd> `from_url`
 
-```python lines
+```python
 from_url(
     url: 'str',
     headers: 'dict[str, Any] | None' = None,
@@ -1698,11 +1737,11 @@ Downloads the content, infers mimetype/extension from headers, URL path, and dat
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L100"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L97"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>classmethod</kbd> `model_validate`
 
-```python lines
+```python
 model_validate(
     obj: 'Any',
     strict: 'bool | None' = None,
@@ -1715,11 +1754,11 @@ Override model_validate to handle Content reconstruction from dict.
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L143"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L139"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>classmethod</kbd> `model_validate_json`
 
-```python lines
+```python
 model_validate_json(
     json_data: 'str | bytes | bytearray',
     strict: 'bool | None' = None,
@@ -1731,11 +1770,11 @@ Override model_validate_json to handle Content reconstruction from JSON.
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L552"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L541"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `open`
 
-```python lines
+```python
 open() → bool
 ```
 
@@ -1751,11 +1790,11 @@ This method uses the platform-specific mechanism to open the file with the defau
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L582"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L571"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `save`
 
-```python lines
+```python
 save(dest: 'str | Path') → None
 ```
 
@@ -1769,11 +1808,11 @@ Copy the file to the specified destination path. Updates the filename and the pa
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L534"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L523"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `serialize_data`
 
-```python lines
+```python
 serialize_data(data: 'bytes') → str
 ```
 
@@ -1781,11 +1820,11 @@ When dumping model in json mode
 
 ---
 
-<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L509"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
+<a href="https://github.com/wandb/weave/blob/master/weave/type_wrappers/Content/content.py#L498"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
 ### <kbd>method</kbd> `to_data_url`
 
-```python lines
+```python
 to_data_url(use_base64: 'bool' = True) → str
 ```
 
@@ -1828,7 +1867,7 @@ A Markdown renderable.
 
 ### <kbd>method</kbd> `__init__`
 
-```python lines
+```python
 __init__(
     markup: 'str',
     code_theme: 'str' = 'monokai',
@@ -1860,7 +1899,7 @@ Sets up a monitor to score incoming calls automatically.
 
 
 **Examples:**
-```python lines
+```python
 import weave
 from weave.scorers import ValidJSONScorer
 
@@ -1909,7 +1948,7 @@ my_monitor.activate()
 
 ### <kbd>method</kbd> `activate`
 
-```python lines
+```python
 activate() → ObjectRef
 ```
 
@@ -1926,7 +1965,7 @@ Activates the monitor.
 
 ### <kbd>method</kbd> `deactivate`
 
-```python lines
+```python
 deactivate() → ObjectRef
 ```
 
@@ -1943,7 +1982,7 @@ Deactivates the monitor.
 
 ### <kbd>classmethod</kbd> `from_obj`
 
-```python lines
+```python
 from_obj(obj: WeaveObject) → Self
 ```
 
@@ -1965,7 +2004,7 @@ A fluent-style class for working with SavedView objects.
 
 ### <kbd>method</kbd> `__init__`
 
-```python lines
+```python
 __init__(view_type: 'str' = 'traces', label: 'str' = 'SavedView') → None
 ```
 
@@ -2014,7 +2053,7 @@ __init__(view_type: 'str' = 'traces', label: 'str' = 'SavedView') → None
 
 ### <kbd>method</kbd> `add_column`
 
-```python lines
+```python
 add_column(path: 'str | ObjectPath', label: 'str | None' = None) → SavedView
 ```
 
@@ -2028,7 +2067,7 @@ add_column(path: 'str | ObjectPath', label: 'str | None' = None) → SavedView
 
 ### <kbd>method</kbd> `add_columns`
 
-```python lines
+```python
 add_columns(*columns: 'str') → SavedView
 ```
 
@@ -2040,7 +2079,7 @@ Convenience method for adding multiple columns to the grid.
 
 ### <kbd>method</kbd> `add_filter`
 
-```python lines
+```python
 add_filter(
     field: 'str',
     operator: 'str',
@@ -2058,7 +2097,7 @@ add_filter(
 
 ### <kbd>method</kbd> `add_sort`
 
-```python lines
+```python
 add_sort(field: 'str', direction: 'SortDirection') → SavedView
 ```
 
@@ -2072,7 +2111,7 @@ add_sort(field: 'str', direction: 'SortDirection') → SavedView
 
 ### <kbd>method</kbd> `column_index`
 
-```python lines
+```python
 column_index(path: 'int | str | ObjectPath') → int
 ```
 
@@ -2086,7 +2125,7 @@ column_index(path: 'int | str | ObjectPath') → int
 
 ### <kbd>method</kbd> `filter_op`
 
-```python lines
+```python
 filter_op(op_name: 'str | None') → SavedView
 ```
 
@@ -2100,7 +2139,7 @@ filter_op(op_name: 'str | None') → SavedView
 
 ### <kbd>method</kbd> `get_calls`
 
-```python lines
+```python
 get_calls(
     limit: 'int | None' = None,
     offset: 'int | None' = None,
@@ -2118,7 +2157,7 @@ Get calls matching this saved view's filters and settings.
 
 ### <kbd>method</kbd> `get_known_columns`
 
-```python lines
+```python
 get_known_columns(num_calls_to_query: 'int | None' = None) → list[str]
 ```
 
@@ -2130,7 +2169,7 @@ Get the set of columns that are known to exist.
 
 ### <kbd>method</kbd> `get_table_columns`
 
-```python lines
+```python
 get_table_columns() → list[TableColumn]
 ```
 
@@ -2144,7 +2183,7 @@ get_table_columns() → list[TableColumn]
 
 ### <kbd>method</kbd> `hide_column`
 
-```python lines
+```python
 hide_column(col_name: 'str') → SavedView
 ```
 
@@ -2158,7 +2197,7 @@ hide_column(col_name: 'str') → SavedView
 
 ### <kbd>method</kbd> `insert_column`
 
-```python lines
+```python
 insert_column(
     idx: 'int',
     path: 'str | ObjectPath',
@@ -2176,7 +2215,7 @@ insert_column(
 
 ### <kbd>classmethod</kbd> `load`
 
-```python lines
+```python
 load(ref: 'str') → SavedView
 ```
 
@@ -2190,7 +2229,7 @@ load(ref: 'str') → SavedView
 
 ### <kbd>method</kbd> `page_size`
 
-```python lines
+```python
 page_size(page_size: 'int') → SavedView
 ```
 
@@ -2204,7 +2243,7 @@ page_size(page_size: 'int') → SavedView
 
 ### <kbd>method</kbd> `pin_column_left`
 
-```python lines
+```python
 pin_column_left(col_name: 'str') → SavedView
 ```
 
@@ -2218,7 +2257,7 @@ pin_column_left(col_name: 'str') → SavedView
 
 ### <kbd>method</kbd> `pin_column_right`
 
-```python lines
+```python
 pin_column_right(col_name: 'str') → SavedView
 ```
 
@@ -2232,7 +2271,7 @@ pin_column_right(col_name: 'str') → SavedView
 
 ### <kbd>method</kbd> `remove_column`
 
-```python lines
+```python
 remove_column(path: 'int | str | ObjectPath') → SavedView
 ```
 
@@ -2246,7 +2285,7 @@ remove_column(path: 'int | str | ObjectPath') → SavedView
 
 ### <kbd>method</kbd> `remove_columns`
 
-```python lines
+```python
 remove_columns(*columns: 'str') → SavedView
 ```
 
@@ -2258,7 +2297,7 @@ Remove columns from the saved view.
 
 ### <kbd>method</kbd> `remove_filter`
 
-```python lines
+```python
 remove_filter(index_or_field: 'int | str') → SavedView
 ```
 
@@ -2272,7 +2311,7 @@ remove_filter(index_or_field: 'int | str') → SavedView
 
 ### <kbd>method</kbd> `remove_filters`
 
-```python lines
+```python
 remove_filters() → SavedView
 ```
 
@@ -2284,7 +2323,7 @@ Remove all filters from the saved view.
 
 ### <kbd>method</kbd> `rename`
 
-```python lines
+```python
 rename(label: 'str') → SavedView
 ```
 
@@ -2298,7 +2337,7 @@ rename(label: 'str') → SavedView
 
 ### <kbd>method</kbd> `rename_column`
 
-```python lines
+```python
 rename_column(path: 'int | str | ObjectPath', label: 'str') → SavedView
 ```
 
@@ -2312,7 +2351,7 @@ rename_column(path: 'int | str | ObjectPath', label: 'str') → SavedView
 
 ### <kbd>method</kbd> `save`
 
-```python lines
+```python
 save() → SavedView
 ```
 
@@ -2324,7 +2363,7 @@ Publish the saved view to the server.
 
 ### <kbd>method</kbd> `set_columns`
 
-```python lines
+```python
 set_columns(*columns: 'str') → SavedView
 ```
 
@@ -2336,7 +2375,7 @@ Set the columns to be displayed in the grid.
 
 ### <kbd>method</kbd> `show_column`
 
-```python lines
+```python
 show_column(col_name: 'str') → SavedView
 ```
 
@@ -2350,7 +2389,7 @@ show_column(col_name: 'str') → SavedView
 
 ### <kbd>method</kbd> `sort_by`
 
-```python lines
+```python
 sort_by(field: 'str', direction: 'SortDirection') → SavedView
 ```
 
@@ -2364,7 +2403,7 @@ sort_by(field: 'str', direction: 'SortDirection') → SavedView
 
 ### <kbd>method</kbd> `to_grid`
 
-```python lines
+```python
 to_grid(limit: 'int | None' = None) → Grid
 ```
 
@@ -2378,7 +2417,7 @@ to_grid(limit: 'int | None' = None) → Grid
 
 ### <kbd>method</kbd> `to_rich_table_str`
 
-```python lines
+```python
 to_rich_table_str() → str
 ```
 
@@ -2392,7 +2431,7 @@ to_rich_table_str() → str
 
 ### <kbd>method</kbd> `ui_url`
 
-```python lines
+```python
 ui_url() → str | None
 ```
 
@@ -2406,7 +2445,7 @@ Note this is the "result" page with traces etc, not the URL for the view object.
 
 ### <kbd>method</kbd> `unpin_column`
 
-```python lines
+```python
 unpin_column(col_name: 'str') → SavedView
 ```
 
@@ -2451,7 +2490,7 @@ This class handles audio data storage and provides methods for loading from diff
 
 ### <kbd>method</kbd> `__init__`
 
-```python lines
+```python
 __init__(
     data: 'bytes',
     format: 'SUPPORTED_FORMATS_TYPE',
@@ -2472,7 +2511,7 @@ __init__(
 
 ### <kbd>method</kbd> `export`
 
-```python lines
+```python
 export(path: 'str | bytes | Path | PathLike') → None
 ```
 
@@ -2490,7 +2529,7 @@ Export audio data to a file.
 
 ### <kbd>classmethod</kbd> `from_data`
 
-```python lines
+```python
 from_data(data: 'str | bytes', format: 'str') → Audio
 ```
 
@@ -2521,7 +2560,7 @@ Create an Audio object from raw data and specified format.
 
 ### <kbd>classmethod</kbd> `from_path`
 
-```python lines
+```python
 from_path(path: 'str | bytes | Path | PathLike') → Audio
 ```
 

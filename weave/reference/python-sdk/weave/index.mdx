@@ -31,12 +31,7 @@ Following init, calls of weave.op() decorated functions will be logged to the sp
 
 **Args:**
  
- - <b>`project_name`</b>:  The name of the Weights & Biases team and project to log to. If you don't  specify a team, your default entity is used. To find or update your default entity, refer to [User Settings](https://docs.wandb.ai/guides/models/app/settings-page/user-settings/#default-team) in the W&B Models documentation. 
- - <b>`settings`</b>:  Configuration for the Weave client generally. 
- - <b>`autopatch_settings`</b>:  (Deprecated) Configuration for autopatch integrations. Use explicit patching instead. 
- - <b>`global_postprocess_inputs`</b>:  A function that will be applied to all inputs of all ops. 
- - <b>`global_postprocess_output`</b>:  A function that will be applied to all outputs of all ops. 
- - <b>`global_attributes`</b>:  A dictionary of attributes that will be applied to all traces. 
+ - <b>`project_name`</b>:  The name of the Weights & Biases team and project to log to. If you don't  specify a team, your default entity is used. To find or update your default entity, refer to [User Settings](https://docs.wandb.ai/guides/models/app/settings-page/user-settings/#default-team) in the W&B Models documentation. settings`</b>:  Configuration for the Weave client generally. autopatch_settings`</b>:  (Deprecated) Configuration for autopatch integrations. Use explicit patching instead. global_postprocess_inputs`</b>:  A function that will be applied to all inputs of all ops. global_postprocess_output`</b>:  A function that will be applied to all outputs of all ops. global_attributes`</b>:  A dictionary of attributes that will be applied to all traces.
 
 NOTE: Global postprocessing settings are applied to all ops after each op's own postprocessing.  The order is always: 1. Op-specific postprocessing 2. Global postprocessing 
 
@@ -59,8 +54,7 @@ Weave creates a new version of the object if the object's name already exists an
 
 **Args:**
  
- - <b>`obj`</b>:  The object to save and version. 
- - <b>`name`</b>:  The name to save the object under. 
+ - <b>`obj`</b>:  The object to save and version. name`</b>:  The name to save the object under.
 
 **Returns:**
  A Weave Ref to the saved object. 
@@ -243,7 +237,7 @@ with weave.attributes({'env': 'production'}):
 
 ```python
 thread(
-    thread_id: 'str | None | object' = <object object at 0x7fa13df4ce50>
+    thread_id: 'str | None | object' = <object object at 0x7efeae638e50>
 ) → Iterator[ThreadContext]
 ```
 
@@ -285,9 +279,7 @@ This class extends Pydantic's BaseModel to provide Weave-specific functionality 
 
 **Attributes:**
  
- - <b>`name`</b> (Optional[str]):  A human-readable name for the object. 
- - <b>`description`</b> (Optional[str]):  A description of what the object represents. 
- - <b>`ref`</b> (Optional[ObjectRef]):  A reference to the object in the Weave system. 
+ - <b>`name`</b> (Optional[str]):  A human-readable name for the object. description`</b> (Optional[str]):  A description of what the object represents. ref`</b> (Optional[ObjectRef]):  A reference to the object in the Weave system.
 
 **Examples:**
 ```python
@@ -318,8 +310,7 @@ Create an object instance from a Weave URI.
 
 **Args:**
  
- - <b>`uri`</b> (str):  The Weave URI pointing to the object. 
- - <b>`objectify`</b> (bool):  Whether to objectify the result. Defaults to True. 
+ - <b>`uri`</b> (str):  The Weave URI pointing to the object. objectify`</b> (bool):  Whether to objectify the result. Defaults to True.
 
 **Returns:**
  
@@ -354,9 +345,7 @@ This validator handles special cases where the input is an ObjectRef or WeaveObj
 
 **Args:**
  
- - <b>`v`</b> (Any):  The value to validate. 
- - <b>`handler`</b> (ValidatorFunctionWrapHandler):  The standard pydantic validation handler. 
- - <b>`info`</b> (ValidationInfo):  Validation context information. 
+ - <b>`v`</b> (Any):  The value to validate. handler`</b> (ValidatorFunctionWrapHandler):  The standard pydantic validation handler. info`</b> (ValidationInfo):  Validation context information.
 
 **Returns:**
  
@@ -718,7 +707,7 @@ asyncio.run(evaluation.evaluate(function_to_evaluate))
 - `description`: `typing.Optional[str]`
 - `ref`: `typing.Optional[trace.refs.ObjectRef]`
 - `dataset`: `<class 'dataset.dataset.Dataset'>`
-- `scorers`: `typing.Optional[list[typing.Annotated[typing.Union[trace.op_protocol.Op, flow.scorer.Scorer], BeforeValidator(func=<function cast_to_scorer at 0x7fa13dd07e20>, json_schema_input_type=PydanticUndefined)]]]`
+- `scorers`: `typing.Optional[list[typing.Annotated[typing.Union[trace.op_protocol.Op, flow.scorer.Scorer], BeforeValidator(func=<function cast_to_scorer at 0x7efeae4a0040>, json_schema_input_type=PydanticUndefined)]]]`
 - `preprocess_model_input`: `typing.Optional[typing.Callable[[dict], dict]]`
 - `trials`: `<class 'int'>`
 - `metadata`: `typing.Optional[dict[str, typing.Any]]`
@@ -987,8 +976,7 @@ If output is provided, returns a ScoreLogger for direct use. If output is not pr
 
 **Args:**
  
- - <b>`inputs`</b>:  The input data for the prediction 
- - <b>`output`</b>:  The output value. If not provided, use as context manager to set later. 
+ - <b>`inputs`</b>:  The input data for the prediction output`</b>:  The output value. If not provided, use as context manager to set later.
 
 **Returns:**
  ScoreLogger if output provided, PredictionContext if not. 
@@ -1048,12 +1036,7 @@ Saves the provided content as an object in the project and writes its reference 
 
 **Args:**
  
- - <b>`name`</b>:  The view name to display, used as the key under `summary.weave.views`. 
- - <b>`content`</b>:  A `weave.Content` instance or string to serialize. 
- - <b>`extension`</b>:  Optional file extension for string content inputs. 
- - <b>`mimetype`</b>:  Optional MIME type for string content inputs. 
- - <b>`metadata`</b>:  Optional metadata attached to newly created `Content`. 
- - <b>`encoding`</b>:  Text encoding for string content inputs. 
+ - <b>`name`</b>:  The view name to display, used as the key under `summary.weave.views`. content`</b>:  A `weave.Content` instance or string to serialize. extension`</b>:  Optional file extension for string content inputs. mimetype`</b>:  Optional MIME type for string content inputs. metadata`</b>:  Optional metadata attached to newly created `Content`. encoding`</b>:  Text encoding for string content inputs.
 
 **Returns:**
  None 
@@ -1189,8 +1172,7 @@ Initialize a File object.
 
 **Args:**
  
- - <b>`path`</b>:  Path to the file (string or pathlib.Path) 
- - <b>`mimetype`</b>:  Optional MIME type of the file - will be inferred from extension if not provided 
+ - <b>`path`</b>:  Path to the file (string or pathlib.Path) mimetype`</b>:  Optional MIME type of the file - will be inferred from extension if not provided
 
 ---
 
@@ -1505,13 +1487,7 @@ A Markdown renderable.
 
 **Args:**
  
- - <b>`markup`</b> (str):  A string containing markdown. 
- - <b>`code_theme`</b> (str, optional):  Pygments theme for code blocks. Defaults to "monokai". See https://pygments.org/styles/ for code themes. 
- - <b>`justify`</b> (JustifyMethod, optional):  Justify value for paragraphs. Defaults to None. 
- - <b>`style`</b> (Union[str, Style], optional):  Optional style to apply to markdown. 
- - <b>`hyperlinks`</b> (bool, optional):  Enable hyperlinks. Defaults to ``True``. 
- - <b>`inline_code_lexer`</b>:  (str, optional): Lexer to use if inline code highlighting is  enabled. Defaults to None. 
- - <b>`inline_code_theme`</b>:  (Optional[str], optional): Pygments theme for inline code  highlighting, or None for no highlighting. Defaults to None. 
+ - <b>`markup`</b> (str):  A string containing markdown. code_theme`</b> (str, optional):  Pygments theme for code blocks. Defaults to "monokai". See https://pygments.org/styles/ for code themes. justify`</b> (JustifyMethod, optional):  Justify value for paragraphs. Defaults to None. style`</b> (Union[str, Style], optional):  Optional style to apply to markdown. hyperlinks`</b> (bool, optional):  Enable hyperlinks. Defaults to ``True``. inline_code_lexer`</b>:  (str, optional): Lexer to use if inline code highlighting is  enabled. Defaults to None. inline_code_theme`</b>:  (Optional[str], optional): Pygments theme for inline code  highlighting, or None for no highlighting. Defaults to None.
 
 <a href="https://github.com/wandb/weave/blob/0.52.10/rich/markdown.py#L534"><img align="right" src="https://img.shields.io/badge/-source-cccccc?style=flat-square" /></a>
 
@@ -1982,14 +1958,11 @@ This class handles audio data storage and provides methods for loading from diff
 
 **Attributes:**
  
- - <b>`format`</b>:  The audio format (currently supports 'wav' or 'mp3') 
- - <b>`data`</b>:  The raw audio data as bytes 
+ - <b>`format`</b>:  The audio format (currently supports 'wav' or 'mp3') data`</b>:  The raw audio data as bytes
 
 **Args:**
  
- - <b>`data`</b>:  The audio data (bytes or base64 encoded string) 
- - <b>`format`</b>:  The audio format ('wav' or 'mp3') 
- - <b>`validate_base64`</b>:  Whether to attempt base64 decoding of the input data 
+ - <b>`data`</b>:  The audio data (bytes or base64 encoded string) format`</b>:  The audio format ('wav' or 'mp3') validate_base64`</b>:  Whether to attempt base64 decoding of the input data
 
 **Raises:**
  
@@ -2037,8 +2010,7 @@ Create an Audio object from raw data and specified format.
 
 **Args:**
  
- - <b>`data`</b>:  Audio data as bytes or base64 encoded string 
- - <b>`format`</b>:  Audio format ('wav' or 'mp3') 
+ - <b>`data`</b>:  Audio data as bytes or base64 encoded string format`</b>:  Audio format ('wav' or 'mp3')
 
 **Returns:**
  
@@ -2071,3 +2043,4 @@ Create an Audio object from a file path.
 **Raises:**
  
  - <b>`ValueError`</b>:  If file doesn't exist or has unsupported extension 
+

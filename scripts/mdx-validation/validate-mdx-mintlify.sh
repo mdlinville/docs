@@ -96,20 +96,8 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "Running: mint broken-links"
 echo ""
 
-LINKS_OUTPUT=$(mint broken-links 2>&1)
-echo "$LINKS_OUTPUT"
-
-# Check if broken links were found (mint broken-links exits 0 even when it finds broken links)
-if echo "$LINKS_OUTPUT" | grep -q "found.*broken links"; then
-  echo ""
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "❌ BROKEN LINKS DETECTED"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "Please fix the broken links shown above."
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
-  exit 1
-fi
+# Run mint broken-links - it will exit with non-zero if broken links are found
+mint broken-links
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

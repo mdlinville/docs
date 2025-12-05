@@ -46,7 +46,19 @@ echo "Running: mint dev --no-open (will run for ${PARSE_TIME}s to parse all file
 echo ""
 
 # Run mint dev with tee to force output writing, timeout after PARSE_TIME seconds
-timeout --preserve-status ${PARSE_TIME}s mint dev --no-open 2>&1 | tee "$LOGFILE" > /dev/null || true
+# Use timeout if available (Linux), otherwise use gtimeout (macOS with coreutils), or perl as fallback
+if command -v timeout > /dev/null 2>&1; then
+  timeout --preserve-status ${PARSE_TIME}s mint dev --no-open 2>&1 | tee "$LOGFILE" > /dev/null || true
+elif command -v gtimeout > /dev/null 2>&1; then
+  gtimeout --preserve-status ${PARSE_TIME}s mint dev --no-open 2>&1 | tee "$LOGFILE" > /dev/null || true
+else
+  # Fallback: run mint dev in background and kill after PARSE_TIME
+  mint dev --no-open 2>&1 | tee "$LOGFILE" > /dev/null &
+  PID=$!
+  sleep ${PARSE_TIME}
+  kill "$PID" 2>/dev/null || true
+  wait "$PID" 2>/dev/null || true
+fi
 
 echo ""
 echo "✓ Mintlify finished parsing"
@@ -84,15 +96,11 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "Running: mint broken-links"
 echo ""
 
-if mint broken-links; then
-  echo ""
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "✅ ALL VALIDATION CHECKS PASSED"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "- No parsing errors"
-  echo "- No broken links"
-  exit 0
-else
+LINKS_OUTPUT=$(mint broken-links 2>&1)
+echo "$LINKS_OUTPUT"
+
+# Check if broken links were found (mint broken-links exits 0 even when it finds broken links)
+if echo "$LINKS_OUTPUT" | grep -q "found.*broken links"; then
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "❌ BROKEN LINKS DETECTED"
@@ -102,3 +110,11 @@ else
   echo ""
   exit 1
 fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ ALL VALIDATION CHECKS PASSED"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "- No parsing errors"
+echo "- No broken links"
+exit 0

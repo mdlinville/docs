@@ -12,7 +12,7 @@ import PreviewLink from '/snippets/en/_includes/llm-eval-jobs/preview.mdx';
 This page shows how to use [LLM Evaluation Jobs](/models/launch) to run a series of evaluation benchmarks on a hosted API model at a publicly-accessible URL, using infrastructure managed by CoreWeave. To evaluate a model checkpoint saved as an artifact in W&B Models, see [Evaluate a model checkpoint](/models/launch/evaluate-model-checkpoint) instead.
 
 ## Prerequisites
-1. Review the [requirements and limitations](/models/launc#more-details) for LLM Evaluation Jobs.
+1. Review the [requirements and limitations](/models/launch#more-details) for LLM Evaluation Jobs.
 1. To run certain benchmarks, a team admin must add the required API keys as team-scoped secrets. Any team member can specify the secret when configuring an evaluation job.
     - An **OpenAPI API key**: Used by benchmarks that use OpenAI models for scoring. Required if the field **Scorer API key** appears after you select a benchmark. The secret must be named `OPENAI_API_KEY`.
     - A **Hugging Face user access token**: Required for certain benchmarks like `lingoly` and `lingoly2` that require access to one or more gated Hugging Face datasets. Required if the field **Hugging Face Token** appears after selecting a benchmark. The API key must have access to the relevant dataset. See the Hugging Face documentation for [User access tokens](https://huggingface.co/docs/hub/en/security-tokens) and [accessing gated datasets](https://huggingface.co/docs/hub/en/datasets-gated#access-gated-datasets-as-a-user).
@@ -42,7 +42,7 @@ Follow these steps to set up and launch an evaluation job:
 This example job runs the `simpleqa` benchmark against the OpenAI model `o4-mini`:
 
 <Frame>
-![Example hosted model evaluation job](/images/models/llm-evaluation-jobs/hosted-model-job-example.pn)
+![Example hosted model evaluation job](/images/models/llm-evaluation-jobs/hosted-model-job-example.png)
 </Frame>
 
 This example leaderboard visualizes the performance of several OpenAI models together:

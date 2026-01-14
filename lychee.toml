@@ -41,9 +41,6 @@ exclude = [
 
 # File/directory paths to exclude from checking
 exclude_path = [
-  # Exclude localized content directories
-  "ja",
-  "ko",
   # Exclude non-documentation directories
   "scripts",
   "node_modules",

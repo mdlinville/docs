@@ -92,8 +92,8 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: lycheeverse/lychee-action@v2
         with:
-          # Configuration is in lychee.toml
-          # Don't fail the workflow on broken links (informational only)
+          args: "--threads 5 --max-retries 5 --retry-wait-time 2 --exclude '/ja' --exclude '/ko' --include '^https?://' --include '^http?://' --base-url='${{ github.event.deployment_status.environment_url }}' '.'"
+          format: markdown
           fail: false
           # Don't fail if no files to check
           failIfEmpty: false
@@ -128,6 +128,22 @@ jobs:
               if (isFork && !deployUrl) {
                 commentBody += '\n_Note: Checked against production site (https://docs.wandb.ai) since preview deployments are not available for forks._\n';
               }
+              
+              // Check if there were redirects in the report
+              try {
+                const report = fs.readFileSync('./lychee/out.md', 'utf8');
+                if (report.includes('Redirect') || report.includes('redirect')) {
+                  commentBody += '\n\n> [!TIP]\n';
+                  commentBody += '> **Redirects detected**: If you see redirects for internal docs.wandb.ai links, check if they have trailing slashes.\n';
+                  commentBody += '> \n';
+                  commentBody += '> Mintlify automatically removes trailing slashes, causing redirects like:\n';
+                  commentBody += '> - `https://docs.wandb.ai/models/` → `https://docs.wandb.ai/models`\n';
+                  commentBody += '> \n';
+                  commentBody += '> **Fix**: Remove trailing slashes from links to avoid unnecessary redirects.\n';
+                }
+              } catch (e) {
+                // Ignore if report file doesn't exist
+              }
             } else {
               // Issues found - include report
               const report = fs.readFileSync('./lychee/out.md', 'utf8');
@@ -143,6 +159,19 @@ jobs:
               }
               commentBody += '> \n';
               commentBody += '> Warnings about **new** files in this PR can be safely ignored.\n\n';
+              
+              // Add trailing slash tip if redirects are present
+              if (report.includes('Redirect') || report.includes('redirect')) {
+                commentBody += '> [!TIP]\n';
+                commentBody += '> **Redirects detected**: If you see redirects for internal docs.wandb.ai links, check if they have trailing slashes.\n';
+                commentBody += '> \n';
+                commentBody += '> Mintlify automatically removes trailing slashes, causing redirects like:\n';
+                commentBody += '> - `https://docs.wandb.ai/models/` → `https://docs.wandb.ai/models`\n';
+                commentBody += '> - `/weave/quickstart/` → `/weave/quickstart`\n';
+                commentBody += '> \n';
+                commentBody += '> **Fix**: Remove trailing slashes from links to avoid unnecessary redirects.\n\n';
+              }
+              
               commentBody += '---\n\n';
               commentBody += report;
             }

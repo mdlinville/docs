@@ -11,14 +11,20 @@ jobs:
     permissions:
       issues: write # required for peter-evans/create-issue-from-file
     steps:
-      # check URLs with Lychee
       - uses: actions/checkout@v6
+
+      - name: Download and parse sitemap
+        run: |
+          curl -s https://docs.wandb.ai/sitemap.xml | \
+          grep -o '<loc>[^<]*</loc>' | \
+          sed 's/<loc>//g; s/<\/loc>//g' > urls.txt
+          echo "Found $(wc -l < urls.txt) URLs in sitemap"
 
       - name: Link Checker
         id: lychee
         uses: lycheeverse/lychee-action@v2
         with:
-          args: "--threads 5 --max-retries 5 --retry-wait-time 2 --include '^https?://' --include '^http?://' --base-url='http://docs.wandb.ai' 'http://docs.wandb.ai'"
+          args: "--threads 5 --max-retries 5 --retry-wait-time 2 --include '^https?://' --include '^http?://' urls.txt"
           output: ./lychee-report.md
           format: markdown
           fail: false

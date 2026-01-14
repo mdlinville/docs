@@ -1,33 +1,159 @@
-name: Lychee PR link checker
+name: Link checker - PR changed files
+
+# Avoid collisions by ensuring only one run per ref
+concurrency:
+  group: linkcheck-pr-${{ github.ref_name }}
+  cancel-in-progress: false
 
 on:
+  workflow_dispatch:
   deployment_status:
 
 permissions:
   contents: read
   deployments: read
+  pull-requests: write
 
 jobs:
   linkChecker:
     runs-on: ubuntu-latest
-
+    
     # Only run when Mintlify PR deployment succeeds
     if: |
-      github.event.deployment_status.state == 'success' && 
-      github.event.deployment.environment == 'staging' &&
-      contains(github.event.deployment_status.creator.login, 'mintlify') &&
-      contains(github.event.deployment_status.environment_url, 'mintlify')
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'deployment_status' && 
+       github.event.deployment_status.state == 'success' && 
+       github.event.deployment.environment == 'staging' &&
+       contains(github.event.deployment_status.creator.login, 'mintlify') &&
+       contains(github.event.deployment_status.environment_url, 'mintlify'))
+    
     steps:
-      # check URLs with Lychee
       - uses: actions/checkout@v6
+        with:
+          # Needed to diff base..head for the associated PR
+          fetch-depth: 0
+
+      - name: Resolve PR and deployment URL
+        id: pr-context
+        if: github.event_name == 'deployment_status'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.payload.deployment?.sha;
+            const deployUrl =
+              context.payload.deployment_status?.environment_url ||
+              context.payload.deployment_status?.target_url ||
+              '';
+
+            core.info(`Deployment SHA: ${sha}`);
+            core.info(`Deployment URL: ${deployUrl}`);
+
+            // Find PR(s) associated with this deployment commit SHA
+            const prsResp = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner,
+              repo,
+              commit_sha: sha,
+            });
+
+            const pr = prsResp.data?.[0];
+            if (!pr) {
+              core.warning(`No PR associated with commit ${sha}. Skipping linkcheck + PR comment.`);
+              core.setOutput('pr_number', '');
+              core.setOutput('deploy_url', deployUrl);
+              return;
+            }
+
+            core.info(`Associated PR: #${pr.number} (${pr.html_url})`);
+            core.setOutput('pr_number', String(pr.number));
+            core.setOutput('base_sha', pr.base.sha);
+            core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('deploy_url', deployUrl);
+
+      - name: Get changed documentation files
+        id: changed-files
+        if: steps.pr-context.outputs.pr_number != '' || github.event_name == 'workflow_dispatch'
+        uses: tj-actions/changed-files@v47.0.1
+        with:
+          base_sha: ${{ steps.pr-context.outputs.base_sha }}
+          sha: ${{ steps.pr-context.outputs.head_sha }}
+          files: |
+            **/*.md
+            **/*.mdx
 
       - name: Link Checker
         id: lychee
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: lycheeverse/lychee-action@v2
         with:
-          args: "--threads 5 --max-retries 5 --retry-wait-time 2 --include '^https?://' --include '^http?://' --base-url='${{ github.event.deployment_status.environment_url }}' '.'"
-          format: markdown
+          # Configuration is in lychee.toml
+          # Don't fail the workflow on broken links (informational only)
           fail: false
-        env:
-          # to be used in case rate limits are surpassed
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          # Don't fail if no files to check
+          failIfEmpty: false
+          # Output format for reports
+          format: markdown
+          # GitHub token for API rate limiting
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Override base_url with the deployment URL and check only changed files
+          args: >-
+            --base-url ${{ steps.pr-context.outputs.deploy_url || 'https://docs.wandb.ai' }}
+            ${{ steps.changed-files.outputs.all_changed_files || '.' }}
+
+      - name: Comment PR with link check results
+        if: steps.pr-context.outputs.pr_number != '' && (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const identifier = '<!-- lychee-link-checker-comment -->';
+
+            let commentBody = identifier + '\n';
+
+            if (${{ steps.lychee.outputs.exit_code }} === 0) {
+              // Success - no broken links
+              commentBody += '## 🔗 Link Checker Results\n\n';
+              commentBody += '✅ **All links are valid!**\n\n';
+              commentBody += 'No broken links were detected in the changed files.\n';
+            } else {
+              // Issues found - include report
+              const report = fs.readFileSync('./lychee/out.md', 'utf8');
+
+              commentBody += '## 🔗 Link Checker Results\n\n';
+              commentBody += '> [!NOTE]\n';
+              commentBody += '> Links to **newly created files** in this PR may be reported as broken because this checks links against the **preview deployment**.\n';
+              commentBody += '> \n';
+              commentBody += '> Warnings about **new** files in this PR can be safely ignored.\n\n';
+              commentBody += '---\n\n';
+              commentBody += report;
+            }
+
+            // Find existing comment
+            const prNumber = Number('${{ steps.pr-context.outputs.pr_number }}');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const existingComment = comments.find(comment =>
+              comment.body?.includes(identifier) && comment.user?.login === 'github-actions[bot]'
+            );
+
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+            }

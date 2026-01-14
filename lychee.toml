@@ -30,6 +30,11 @@ scheme = [
   "http",
 ]
 
+# Only check URLs matching these patterns (required when checking URL lists)
+include = [
+  '^https?://',  # Match all http:// and https:// URLs
+]
+
 # Logging verbosity
 verbose = "info"
 

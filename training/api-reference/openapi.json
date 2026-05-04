@@ -399,13 +399,61 @@
         "tags": [
           "training-jobs"
         ],
-        "summary": "Create Training Job",
-        "operationId": "create_training_job_v1_preview_training_jobs_post",
+        "summary": "Create Rl Training Job",
+        "description": "Create a new RL (Reinforcement Learning) training job.",
+        "operationId": "Create_RL_Training_Job_v1_preview_training_jobs_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateTrainingJob"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/preview/sft-training-jobs": {
+      "post": {
+        "tags": [
+          "training-jobs"
+        ],
+        "summary": "Create Sft Training Job",
+        "description": "Create a new SFT (Supervised Fine-Tuning) training job.",
+        "operationId": "Create_SFT_Training_Job_v1_preview_sft_training_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSFTTrainingJob"
               }
             }
           },
@@ -563,6 +611,9 @@
     },
     "/v1/health": {
       "get": {
+        "tags": [
+          "health"
+        ],
         "summary": "Health Check",
         "operationId": "health_check_v1_health_get",
         "responses": {
@@ -579,6 +630,9 @@
     },
     "/v1/system-check": {
       "get": {
+        "tags": [
+          "health"
+        ],
         "summary": "System Check",
         "description": "Check health of all system components.\n\nReturns:\n    JSON with status of:\n    - api: Always true (if endpoint is reachable)\n    - database: Whether DB connection works\n    - cpu_queue: Success, duration, and any errors\n    - gpu_queue: Success, duration, and any errors\n\nReturns HTTP 503 if any checks fail.",
         "operationId": "system_check_v1_system_check_get",
@@ -1833,6 +1887,7 @@
             "anyOf": [
               {
                 "type": "integer",
+                "maximum": 9.223372036854776e+18,
                 "minimum": -1.0
               },
               {
@@ -1975,28 +2030,6 @@
             "title": "Request Id",
             "description": "The request_id related to this request. If the caller does not set it, a random_uuid will be generated. This id is used through out the inference process and return in response."
           },
-          "logits_processors": {
-            "anyOf": [
-              {
-                "items": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "$ref": "#/components/schemas/LogitsProcessorConstructor"
-                    }
-                  ]
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Logits Processors",
-            "description": "A list of either qualified names of logits processors, or constructor objects, to apply when sampling. A constructor is a JSON object with a required 'qualname' field specifying the qualified name of the processor class/factory, and optional 'args' and 'kwargs' fields containing positional and keyword arguments. For example: {'qualname': 'my_module.MyLogitsProcessor', 'args': [1, 2], 'kwargs': {'param': 'value'}}."
-          },
           "return_tokens_as_token_ids": {
             "anyOf": [
               {
@@ -2086,6 +2119,17 @@
             ],
             "title": "Vllm Xargs",
             "description": "Additional request parameters with (list of) string or numeric values, used by custom extensions."
+          },
+          "repetition_detection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RepetitionDetectionParams"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Parameters for detecting repetitive N-gram patterns in output tokens. If such repetition is detected, generation will be ended early. LLMs can sometimes generate repetitive, unhelpful token patterns, stopping only when they hit the maximum output length (e.g. 'abcdabcdabcd...' or '\\emoji \\emoji \\emoji ...'). This feature can detect such behavior and terminate early, saving time and tokens."
           }
         },
         "additionalProperties": true,
@@ -2536,17 +2580,6 @@
               }
             ],
             "title": "Reasoning"
-          },
-          "reasoning_content": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reasoning Content"
           }
         },
         "additionalProperties": true,
@@ -2664,6 +2697,49 @@
         "properties": {},
         "type": "object",
         "title": "Content"
+      },
+      "CreateSFTTrainingJob": {
+        "properties": {
+          "model_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Model Id"
+          },
+          "training_data_url": {
+            "type": "string",
+            "title": "Training Data Url",
+            "description": "W&B artifact path for training data (e.g., 'wandb-artifact:///entity/project/artifact-name:version')"
+          },
+          "config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SFTTrainingConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "experimental_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experimental Config"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_id",
+          "training_data_url"
+        ],
+        "title": "CreateSFTTrainingJob",
+        "description": "Schema for creating a new SFT (Supervised Fine-Tuning) TrainingJob.\n\nThe client should upload the training data (trajectories.jsonl and metadata.json)\nto W&B Artifacts and provide the artifact URL."
       },
       "CreateTrainingJob": {
         "properties": {
@@ -3524,44 +3600,6 @@
         "title": "LogRequest",
         "description": "Schema for logging trajectories."
       },
-      "LogitsProcessorConstructor": {
-        "properties": {
-          "qualname": {
-            "type": "string",
-            "title": "Qualname"
-          },
-          "args": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Args"
-          },
-          "kwargs": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Kwargs"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "qualname"
-        ],
-        "title": "LogitsProcessorConstructor"
-      },
       "Logprob": {
         "properties": {
           "logprob": {
@@ -3728,6 +3766,17 @@
           "base_model": {
             "type": "string",
             "title": "Base Model"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
           }
         },
         "type": "object",
@@ -3841,6 +3890,28 @@
         "type": "object",
         "title": "PromptTokenUsageInfo"
       },
+      "RepetitionDetectionParams": {
+        "properties": {
+          "max_pattern_size": {
+            "type": "integer",
+            "title": "Max Pattern Size",
+            "default": 0
+          },
+          "min_pattern_size": {
+            "type": "integer",
+            "title": "Min Pattern Size",
+            "default": 0
+          },
+          "min_count": {
+            "type": "integer",
+            "title": "Min Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "RepetitionDetectionParams",
+        "description": "Parameters for detecting repetitive N-gram patterns in output tokens."
+      },
       "ResponseFormat": {
         "properties": {
           "type": {
@@ -3881,6 +3952,45 @@
         ],
         "title": "Role",
         "description": "The role of a message author (mirrors ``chat::Role``)."
+      },
+      "SFTTrainingConfig": {
+        "properties": {
+          "batch_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string",
+                "const": "auto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Size"
+          },
+          "learning_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Learning Rate"
+          }
+        },
+        "type": "object",
+        "title": "SFTTrainingConfig",
+        "description": "Schema for SFT training config."
       },
       "StreamOptions": {
         "properties": {
@@ -4189,7 +4299,8 @@
               ]
             },
             "type": "array",
-            "title": "Messages And Choices"
+            "title": "Messages And Choices",
+            "default": []
           },
           "tools": {
             "anyOf": [
@@ -4215,7 +4326,30 @@
           },
           "reward": {
             "type": "number",
-            "title": "Reward"
+            "title": "Reward",
+            "default": 0.0
+          },
+          "initial_policy_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial Policy Version"
+          },
+          "final_policy_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Policy Version"
           },
           "metrics": {
             "additionalProperties": {
@@ -4233,24 +4367,6 @@
             },
             "type": "object",
             "title": "Metrics",
-            "default": {}
-          },
-          "auto_metrics": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "type": "object",
-            "title": "Auto Metrics",
             "default": {}
           },
           "metadata": {
@@ -4292,10 +4408,6 @@
           }
         },
         "type": "object",
-        "required": [
-          "messages_and_choices",
-          "reward"
-        ],
         "title": "Trajectory"
       },
       "TrajectoryGroup": {

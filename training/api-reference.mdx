@@ -32,6 +32,7 @@ https://api.training.wandb.ai/v1
 
 ### models
 
+- **[GET /v1/preview/base-models](https://docs.wandb.ai/training/api-reference/models/list-base-models)** - List Base Models
 - **[POST /v1/preview/models](https://docs.wandb.ai/training/api-reference/models/create-model)** - Create Model
 - **[DELETE /v1/preview/models/{model_id}](https://docs.wandb.ai/training/api-reference/models/delete-model)** - Delete Model
 - **[DELETE /v1/preview/models/{model_id}/checkpoints](https://docs.wandb.ai/training/api-reference/models/delete-model-checkpoints)** - Delete Model Checkpoints
@@ -40,7 +41,8 @@ https://api.training.wandb.ai/v1
 
 ### training-jobs
 
-- **[POST /v1/preview/training-jobs](https://docs.wandb.ai/training/api-reference/training-jobs/create-training-job)** - Create Training Job
+- **[POST /v1/preview/sft-training-jobs](https://docs.wandb.ai/training/api-reference/training-jobs/create-sft-training-job)** - Create Sft Training Job
+- **[POST /v1/preview/training-jobs](https://docs.wandb.ai/training/api-reference/training-jobs/create-rl-training-job)** - Create Rl Training Job
 - **[GET /v1/preview/training-jobs/{training_job_id}](https://docs.wandb.ai/training/api-reference/training-jobs/get-training-job)** - Get Training Job
 - **[GET /v1/preview/training-jobs/{training_job_id}/events](https://docs.wandb.ai/training/api-reference/training-jobs/get-training-job-events)** - Get Training Job Events
 
